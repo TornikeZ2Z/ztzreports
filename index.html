@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zip to Zip — Reports</title>
+  <script src="https://accounts.google.com/gsi/client" async></script>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    body { margin: 0; color: #1a1a1a; }
+    header { background: #0b5; color: #fff; padding: 14px 20px; display: flex; align-items: center; gap: 16px; }
+    header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+    main { padding: 20px; max-width: 1100px; margin: 0 auto; }
+    #tables { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 20px; }
+    #tables button { border: 1px solid #ccc; background: #fff; border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+    #tables button:hover { background: #f0f0f0; }
+    #meta { color: #666; font-size: 13px; margin-bottom: 8px; }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    th, td { border: 1px solid #e3e3e3; padding: 6px 8px; text-align: left; white-space: nowrap; }
+    th { background: #fafafa; position: sticky; top: 0; }
+    .wrap { overflow: auto; max-height: 70vh; border: 1px solid #eee; border-radius: 8px; }
+    .muted { color: #888; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Zip to Zip — Reports</h1>
+    <div id="g_id_onload"
+         data-client_id="32168089642-fkk3rglncf6hl5ikq7pi6jbornug1kbb.apps.googleusercontent.com"
+         data-callback="onSignIn" data-auto_prompt="false"></div>
+    <div class="g_id_signin" data-type="standard" data-theme="filled_white" data-size="medium"></div>
+  </header>
+
+  <main>
+    <p id="status" class="muted">Sign in with your <b>@ziptozipmoving.com</b> account to load data.</p>
+    <div id="tables"></div>
+    <div id="meta"></div>
+    <div class="wrap"><table id="grid"></table></div>
+  </main>
+
+  <script>
+    // The two values from the data-pipeline owner:
+    const API = "https://ztz-bridge-32168089642.us-east4.run.app";
+    let TOKEN = null;
+
+    async function api(path) {
+      const r = await fetch(API + path, { headers: { Authorization: "Bearer " + TOKEN } });
+      if (!r.ok) throw new Error("HTTP " + r.status + ": " + (await r.text()));
+      return r.json();
+    }
+
+    async function onSignIn(resp) {
+      TOKEN = resp.credential;
+      document.getElementById("status").textContent = "Loading datasets…";
+      try {
+        const { tables } = await api("/api/_tables");
+        const box = document.getElementById("tables");
+        box.innerHTML = "";
+        tables.forEach(t => {
+          const b = document.createElement("button");
+          b.textContent = t;
+          b.onclick = () => showTable(t);
+          box.appendChild(b);
+        });
+        document.getElementById("status").textContent = "Pick a dataset:";
+      } catch (e) {
+        document.getElementById("status").textContent = "Error: " + e.message;
+      }
+    }
+
+    async function showTable(name) {
+      const meta = document.getElementById("meta");
+      const grid = document.getElementById("grid");
+      meta.textContent = "Loading " + name + "…"; grid.innerHTML = "";
+      try {
+        const data = await api("/api/" + encodeURIComponent(name) + "?limit=200");
+        meta.textContent = `${name}: showing ${data.count} row(s)` + (data.truncated ? " (capped — use a date filter for more)" : "");
+        const rows = data.rows || [];
+        if (!rows.length) { grid.innerHTML = "<tr><td>(no rows)</td></tr>"; return; }
+        const cols = Object.keys(rows[0]);
+        const thead = "<tr>" + cols.map(c => "<th>" + c + "</th>").join("") + "</tr>";
+        const body = rows.map(r => "<tr>" + cols.map(c => "<td>" + (r[c] ?? "") + "</td>").join("") + "</tr>").join("");
+        grid.innerHTML = thead + body;
+      } catch (e) {
+        meta.textContent = "Error: " + e.message;
+      }
+    }
+  </script>
+</body>
+</html>
