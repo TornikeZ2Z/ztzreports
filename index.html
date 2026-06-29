@@ -1,90 +1,321 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Zip to Zip — Reports</title>
-  <script src="https://accounts.google.com/gsi/client" async></script>
-  <style>
-    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-    body { margin: 0; color: #1a1a1a; }
-    header { background: #0b5; color: #fff; padding: 14px 20px; display: flex; align-items: center; gap: 16px; }
-    header h1 { font-size: 18px; margin: 0; font-weight: 600; }
-    main { padding: 20px; max-width: 1100px; margin: 0 auto; }
-    #tables { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 20px; }
-    #tables button { border: 1px solid #ccc; background: #fff; border-radius: 999px; padding: 6px 14px; cursor: pointer; }
-    #tables button:hover { background: #f0f0f0; }
-    #meta { color: #666; font-size: 13px; margin-bottom: 8px; }
-    table { border-collapse: collapse; width: 100%; font-size: 13px; }
-    th, td { border: 1px solid #e3e3e3; padding: 6px 8px; text-align: left; white-space: nowrap; }
-    th { background: #fafafa; position: sticky; top: 0; }
-    .wrap { overflow: auto; max-height: 70vh; border: 1px solid #eee; border-radius: 8px; }
-    .muted { color: #888; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zip to Zip — Data Portal</title>
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#f5f7fa; --panel:#ffffff; --ink:#16202c; --muted:#6b7785; --line:#e6eaf0;
+    --brand:#0aa05a; --brand-d:#08824a; --brand-soft:#e7f7ee;
+    --blue:#2f6df6; --amber:#e8a93b; --red:#e0556b; --shadow:0 1px 2px rgba(16,32,48,.06),0 6px 20px rgba(16,32,48,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);}
+  a{color:var(--brand-d);text-decoration:none}
+  /* header */
+  header.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:12px 22px;}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:.2px}
+  .logo{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--brand),#37c98a);display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px}
+  nav.tabs{display:flex;gap:4px;margin-left:8px}
+  nav.tabs button{border:0;background:none;color:var(--muted);font-weight:600;font-size:14px;padding:8px 12px;border-radius:8px;cursor:pointer}
+  nav.tabs button.active{background:var(--brand-soft);color:var(--brand-d)}
+  nav.tabs button:hover:not(.active){background:#f1f3f6;color:var(--ink)}
+  .spacer{flex:1}
+  .who{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:10px}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink)}
+  .btn:hover{background:#f6f8fa}
+  .btn.brand{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.brand:hover{background:var(--brand-d)}
+  main{max-width:1240px;margin:0 auto;padding:22px}
+  .hidden{display:none!important}
+  /* gate */
+  .gate{min-height:70vh;display:grid;place-items:center;text-align:center}
+  .gate .card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:40px 44px;max-width:440px}
+  .gate h1{margin:.2em 0 .1em;font-size:22px}
+  .gate p{color:var(--muted);margin:.2em 0 18px}
+  /* kpi strip */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+  .kpi .label{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .kpi .val{font-size:26px;font-weight:750;margin-top:6px}
+  .kpi .sub{font-size:12px;color:var(--muted);margin-top:3px}
+  /* cards grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+  .tcard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);cursor:pointer;transition:transform .08s,box-shadow .08s}
+  .tcard:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(16,32,48,.12)}
+  .tcard h3{margin:0;font-size:15px;display:flex;align-items:center;gap:8px}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+  .dot.g{background:var(--brand)} .dot.a{background:var(--amber)} .dot.r{background:#9aa6b2}
+  .tcard .rows{font-size:28px;font-weight:750;margin:8px 0 2px}
+  .meta{font-size:12.5px;color:var(--muted);line-height:1.7}
+  .meta b{color:var(--ink);font-weight:600}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+  .chip{background:#f1f4f8;border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:11px;color:var(--muted)}
+  .section-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:6px 0 12px}
+  /* controls */
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px;box-shadow:var(--shadow)}
+  select,input[type=text],input[type=date]{border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13px;background:#fff;color:var(--ink)}
+  .controls .grow{flex:1;min-width:160px}
+  /* table */
+  .tablewrap{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:auto;max-height:66vh}
+  table.data{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px}
+  table.data th,table.data td{padding:8px 11px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;max-width:340px;overflow:hidden;text-overflow:ellipsis}
+  table.data th{position:sticky;top:0;background:#f7f9fb;font-weight:650;color:#33404e;cursor:pointer;user-select:none}
+  table.data th:hover{background:#eef2f6}
+  table.data tbody tr:nth-child(even){background:#fbfcfe}
+  table.data tbody tr:hover{background:var(--brand-soft)}
+  .pager{display:flex;align-items:center;gap:10px;justify-content:flex-end;margin-top:10px;font-size:13px;color:var(--muted)}
+  .muted{color:var(--muted)} .small{font-size:12px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .panelbox{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+  .colmenu{position:relative}
+  .colpop{position:absolute;top:110%;left:0;z-index:30;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:10px;max-height:300px;overflow:auto;min-width:230px}
+  .colpop label{display:flex;gap:8px;align-items:center;font-size:13px;padding:4px 2px}
+  footer{max-width:1240px;margin:8px auto 30px;padding:0 22px;color:var(--muted);font-size:12px;display:flex;gap:8px;align-items:center}
+  .err{color:var(--red);font-size:13px;margin:8px 0}
+  @media(max-width:820px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
-  <header>
-    <h1>Zip to Zip — Reports</h1>
-    <div id="g_id_onload"
-         data-client_id="32168089642-fkk3rglncf6hl5ikq7pi6jbornug1kbb.apps.googleusercontent.com"
-         data-callback="onSignIn" data-auto_prompt="false"></div>
-    <div class="g_id_signin" data-type="standard" data-theme="filled_white" data-size="medium"></div>
-  </header>
+<header class="top">
+  <div class="brand"><span class="logo">Z</span> Zip to Zip · Data Portal</div>
+  <nav class="tabs" id="tabs">
+    <button data-tab="overview" class="active">Overview</button>
+    <button data-tab="explore">Explore</button>
+    <button data-tab="trends">Trends</button>
+  </nav>
+  <div class="spacer"></div>
+  <div class="who" id="who"></div>
+  <div id="gbtn"><div id="g_id_onload" data-client_id="32168089642-fkk3rglncf6hl5ikq7pi6jbornug1kbb.apps.googleusercontent.com" data-callback="onSignIn" data-auto_prompt="false"></div><div class="g_id_signin" data-type="standard" data-size="medium"></div></div>
+  <button class="btn hidden" id="refreshBtn">↻ Refresh</button>
+</header>
 
-  <main>
-    <p id="status" class="muted">Sign in with your <b>@ziptozipmoving.com</b> account to load data.</p>
-    <div id="tables"></div>
-    <div id="meta"></div>
-    <div class="wrap"><table id="grid"></table></div>
-  </main>
+<main>
+  <!-- gate -->
+  <section id="gate" class="gate">
+    <div class="card">
+      <div class="logo" style="width:46px;height:46px;font-size:22px;margin:0 auto 14px">Z</div>
+      <h1>Sign in to the Data Portal</h1>
+      <p>Use your <b>@ziptozipmoving.com</b> Google account. The data is read-only and refreshed automatically.</p>
+      <div id="g_id_signin2" class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black"></div>
+      <div class="err" id="gateErr"></div>
+    </div>
+  </section>
 
-  <script>
-    // The two values from the data-pipeline owner:
-    const API = "https://ztz-bridge-32168089642.us-east4.run.app";
-    let TOKEN = null;
+  <div id="app" class="hidden">
+    <!-- OVERVIEW -->
+    <section id="overview">
+      <div class="kpis" id="kpis"></div>
+      <div class="section-title">Datasets — health & freshness</div>
+      <div class="grid" id="cards"></div>
+    </section>
 
-    async function api(path) {
-      const r = await fetch(API + path, { headers: { Authorization: "Bearer " + TOKEN } });
-      if (!r.ok) throw new Error("HTTP " + r.status + ": " + (await r.text()));
-      return r.json();
-    }
+    <!-- EXPLORE -->
+    <section id="explore" class="hidden">
+      <div class="controls">
+        <select id="exTable" class="grow"></select>
+        <div class="colmenu"><button class="btn" id="colBtn">Columns ▾</button><div class="colpop hidden" id="colPop"></div></div>
+        <input type="date" id="exSince" title="Show rows on/after this date">
+        <select id="exLimit" title="Max rows to load">
+          <option value="1000">1,000 rows</option>
+          <option value="10000">10,000 rows</option>
+          <option value="50000">50,000 rows</option>
+          <option value="1000000">All rows</option>
+        </select>
+        <input type="text" id="exSearch" class="grow" placeholder="Search loaded rows…">
+        <button class="btn brand" id="exLoad">Load</button>
+        <span class="spacer"></span>
+        <button class="btn" id="dlCsv">⬇ CSV</button>
+        <button class="btn" id="dlJson">⬇ JSON</button>
+      </div>
+      <div id="exMeta" class="small muted" style="margin-bottom:8px"></div>
+      <div class="tablewrap"><table class="data" id="exGrid"></table></div>
+      <div class="pager" id="exPager"></div>
+    </section>
 
-    async function onSignIn(resp) {
-      TOKEN = resp.credential;
-      document.getElementById("status").textContent = "Loading datasets…";
-      try {
-        const { tables } = await api("/api/_tables");
-        const box = document.getElementById("tables");
-        box.innerHTML = "";
-        tables.forEach(t => {
-          const b = document.createElement("button");
-          b.textContent = t;
-          b.onclick = () => showTable(t);
-          box.appendChild(b);
-        });
-        document.getElementById("status").textContent = "Pick a dataset:";
-      } catch (e) {
-        document.getElementById("status").textContent = "Error: " + e.message;
-      }
-    }
+    <!-- TRENDS -->
+    <section id="trends" class="hidden">
+      <div class="controls">
+        <select id="trTable" class="grow"></select>
+        <span class="muted small">Counts come from dataset metadata — instant, full-dataset accurate.</span>
+      </div>
+      <div class="grid2">
+        <div class="panelbox"><div class="section-title">Records per month</div><canvas id="chMonth" height="150"></canvas></div>
+        <div class="panelbox"><div class="section-title">Records per source file</div><canvas id="chFile" height="150"></canvas></div>
+      </div>
+    </section>
+  </div>
+</main>
+<footer>
+  <span>🔒 Read-only · secured by company Google sign-in</span><span class="spacer" style="flex:1"></span>
+  <span id="genAt"></span>
+</footer>
 
-    async function showTable(name) {
-      const meta = document.getElementById("meta");
-      const grid = document.getElementById("grid");
-      meta.textContent = "Loading " + name + "…"; grid.innerHTML = "";
-      try {
-        const data = await api("/api/" + encodeURIComponent(name) + "?limit=200");
-        meta.textContent = `${name}: showing ${data.count} row(s)` + (data.truncated ? " (capped — use a date filter for more)" : "");
-        const rows = data.rows || [];
-        if (!rows.length) { grid.innerHTML = "<tr><td>(no rows)</td></tr>"; return; }
-        const cols = Object.keys(rows[0]);
-        const thead = "<tr>" + cols.map(c => "<th>" + c + "</th>").join("") + "</tr>";
-        const body = rows.map(r => "<tr>" + cols.map(c => "<td>" + (r[c] ?? "") + "</td>").join("") + "</tr>").join("");
-        grid.innerHTML = thead + body;
-      } catch (e) {
-        meta.textContent = "Error: " + e.message;
-      }
-    }
-  </script>
+<script>
+const API = "https://ztz-bridge-32168089642.us-east4.run.app";
+let TOKEN=null, STATS=null;
+const LABELS={angi_leads:"Angi Leads",thumbtack_leads:"Thumbtack Leads",ringcentral_calls:"RingCentral Calls",
+  ringcentral_sms:"RingCentral SMS",callrail_calls:"CallRail Calls",moveboard:"Moveboard (Jobs)",hatch:"Hatch"};
+const pretty=t=>LABELS[t]||t.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
+const fmtN=n=>Number(n).toLocaleString();
+function ago(s){ if(!s) return "—"; const d=new Date(s.replace(" ","T")+"Z"); const m=(Date.now()-d.getTime())/6e4;
+  if(m<60)return Math.max(1,Math.round(m))+"m ago"; const h=m/60; if(h<24)return Math.round(h)+"h ago";
+  const dd=h/24; if(dd<30)return Math.round(dd)+"d ago"; return Math.round(dd/30)+"mo ago"; }
+function statusDot(s){ if(!s)return"r"; const d=(Date.now()-new Date(s.replace(" ","T")+"Z").getTime())/864e5;
+  return d<7?"g":d<30?"a":"r"; }
+function dOnly(s){ return s? s.slice(0,10):"—"; }
+
+async function api(path){
+  const r=await fetch(API+path,{headers:{Authorization:"Bearer "+TOKEN}});
+  if(!r.ok) throw new Error("HTTP "+r.status+": "+(await r.text()));
+  return r.json();
+}
+
+window.onSignIn = async (resp)=>{
+  TOKEN=resp.credential;
+  try{
+    const me=JSON.parse(atob(TOKEN.split(".")[1]));
+    document.getElementById("who").textContent=me.email||"";
+  }catch(e){}
+  document.getElementById("gbtn").classList.add("hidden");
+  document.getElementById("refreshBtn").classList.remove("hidden");
+  await loadStats();
+  document.getElementById("gate").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+};
+
+async function loadStats(){
+  try{
+    STATS=await api("/api/_stats");
+  }catch(e){ document.getElementById("gateErr").textContent=e.message; throw e; }
+  renderOverview(); fillSelectors();
+  document.getElementById("genAt").textContent="Snapshot: "+new Date(STATS.generated_at).toLocaleString();
+}
+
+function renderOverview(){
+  const T=STATS.tables;
+  const totalRows=T.reduce((a,t)=>a+t.rows,0);
+  const lastUpd=T.map(t=>t.last_update).filter(Boolean).sort().slice(-1)[0];
+  const files=T.reduce((a,t)=>a+(t.by_file?t.by_file.length:0),0);
+  document.getElementById("kpis").innerHTML=`
+    ${kpi("Total records",fmtN(totalRows),"across all datasets")}
+    ${kpi("Datasets",T.length,"live tables")}
+    ${kpi("Source files",files,"loaded exports")}
+    ${kpi("Last updated",ago(lastUpd),lastUpd?("on "+dOnly(lastUpd)):"")}`;
+  document.getElementById("cards").innerHTML=T.map(t=>{
+    const d=statusDot(t.last_update);
+    const chips=(t.by_file||[]).slice(0,8).map(f=>`<span class="chip">${f.file}: ${fmtN(f.rows)}</span>`).join("");
+    return `<div class="tcard" data-table="${t.table}">
+      <h3><span class="dot ${d}"></span>${pretty(t.table)}</h3>
+      <div class="rows">${fmtN(t.rows)}</div>
+      <div class="meta">
+        <div>Updated <b>${ago(t.last_update)}</b> <span class="muted">(${dOnly(t.last_update)})</span></div>
+        <div>Coverage <b>${dOnly(t.date_min)}</b> → <b>${dOnly(t.date_max)}</b> <span class="muted">(${t.date_col||"—"})</span></div>
+        <div><b>${t.columns}</b> columns · <b>${(t.by_file||[]).length}</b> source file(s)</div>
+      </div>
+      <div class="chips">${chips}</div>
+    </div>`;
+  }).join("");
+  document.querySelectorAll(".tcard").forEach(c=>c.onclick=()=>{ document.getElementById("exTable").value=c.dataset.table; switchTab("explore"); onTableChange(); loadTable(); });
+}
+const kpi=(l,v,s)=>`<div class="kpi"><div class="label">${l}</div><div class="val">${v}</div><div class="sub">${s||""}</div></div>`;
+
+function fillSelectors(){
+  const opts=STATS.tables.map(t=>`<option value="${t.table}">${pretty(t.table)}</option>`).join("");
+  exTable.innerHTML=opts; trTable.innerHTML=opts;
+  onTableChange(); renderTrends();
+}
+
+/* ---------- Explore ---------- */
+let curRows=[], curCols=[], chosenCols=[], sortKey=null, sortDir=1, page=0; const PAGE=100;
+function statForTable(t){ return STATS.tables.find(x=>x.table===t); }
+function onTableChange(){
+  const t=exTable.value, st=statForTable(t);
+  // build column picker from a quick schema probe via first load; default checked = first 10
+  // we get columns lazily on first load; for now reset
+  chosenCols=[]; sortKey=null; page=0;
+  exSince.value=""; document.getElementById("colPop").innerHTML="<div class='muted small'>Load once to list columns…</div>";
+}
+async function loadTable(){
+  const t=exTable.value, lim=exLimit.value, since=exSince.value;
+  let path=`/api/${encodeURIComponent(t)}?limit=${lim}`;
+  if(chosenCols.length) path+=`&cols=${encodeURIComponent(chosenCols.join(","))}`;
+  const st=statForTable(t);
+  if(since && st && st.date_col) path+=`&since=${since}&since_col=${encodeURIComponent(st.date_col)}`;
+  exMeta.textContent="Loading…";
+  try{
+    const data=await api(path);
+    curRows=data.rows||[]; curCols=curRows.length?Object.keys(curRows[0]):[];
+    if(!chosenCols.length) buildColMenu(curCols);
+    sortKey=null; page=0;
+    exMeta.innerHTML=`<b>${fmtN(data.count)}</b> rows loaded${data.truncated?` · <span style="color:var(--amber)">capped at limit — narrow with a date or higher limit</span>`:""}`;
+    renderGrid();
+  }catch(e){ exMeta.innerHTML=`<span class="err">${e.message}</span>`; }
+}
+function buildColMenu(cols){
+  const pop=document.getElementById("colPop");
+  pop.innerHTML=cols.map(c=>`<label><input type="checkbox" value="${c.replace(/"/g,'&quot;')}" checked> ${c}</label>`).join("");
+  pop.querySelectorAll("input").forEach(cb=>cb.onchange=()=>{ chosenCols=[...pop.querySelectorAll("input:checked")].map(x=>x.value); });
+  chosenCols=cols.slice();
+}
+function filteredRows(){
+  const q=exSearch.value.trim().toLowerCase();
+  let rows=curRows;
+  if(q) rows=rows.filter(r=>Object.values(r).some(v=>String(v??"").toLowerCase().includes(q)));
+  if(sortKey){ rows=[...rows].sort((a,b)=>{const x=a[sortKey],y=b[sortKey];
+    if(x==null)return 1; if(y==null)return -1; const nx=parseFloat(x),ny=parseFloat(y);
+    const both=!isNaN(nx)&&!isNaN(ny); return (both? nx-ny : String(x).localeCompare(String(y)))*sortDir;}); }
+  return rows;
+}
+function renderGrid(){
+  const rows=filteredRows(); const cols=curCols;
+  const start=page*PAGE, slice=rows.slice(start,start+PAGE);
+  const head="<thead><tr>"+cols.map(c=>`<th data-k="${c.replace(/"/g,'&quot;')}">${c}${sortKey===c?(sortDir>0?" ▲":" ▼"):""}</th>`).join("")+"</tr></thead>";
+  const body="<tbody>"+slice.map(r=>"<tr>"+cols.map(c=>`<td title="${String(r[c]??"").replace(/"/g,'&quot;')}">${r[c]??""}</td>`).join("")+"</tr>").join("")+"</tbody>";
+  exGrid.innerHTML=head+body;
+  exGrid.querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k; if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=1;} page=0; renderGrid();});
+  const tot=rows.length, end=Math.min(start+PAGE,tot);
+  exPager.innerHTML=`${tot?start+1:0}–${end} of ${fmtN(tot)} &nbsp; <button class="btn" id="pp" ${page<=0?"disabled":""}>‹ Prev</button> <button class="btn" id="pn" ${end>=tot?"disabled":""}>Next ›</button>`;
+  const pp=document.getElementById("pp"),pn=document.getElementById("pn");
+  if(pp)pp.onclick=()=>{page--;renderGrid();}; if(pn)pn.onclick=()=>{page++;renderGrid();};
+}
+function toCSV(rows){ if(!rows.length)return""; const cols=Object.keys(rows[0]);
+  const esc=v=>{v=v==null?"":String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  return cols.join(",")+"\n"+rows.map(r=>cols.map(c=>esc(r[c])).join(",")).join("\n"); }
+function download(name,text,type){ const b=new Blob([text],{type}); const u=URL.createObjectURL(b);
+  const a=document.createElement("a"); a.href=u; a.download=name; a.click(); URL.revokeObjectURL(u); }
+document.getElementById("dlCsv").onclick=()=>download(exTable.value+".csv",toCSV(filteredRows()),"text/csv");
+document.getElementById("dlJson").onclick=()=>download(exTable.value+".json",JSON.stringify(filteredRows(),null,2),"application/json");
+document.getElementById("exLoad").onclick=loadTable;
+document.getElementById("exSearch").oninput=()=>{page=0;renderGrid();};
+document.getElementById("exTable").onchange=()=>{onTableChange();};
+document.getElementById("colBtn").onclick=()=>document.getElementById("colPop").classList.toggle("hidden");
+
+/* ---------- Trends ---------- */
+let chM=null,chF=null;
+function renderTrends(){
+  const t=trTable.value, st=statForTable(t); if(!st)return;
+  const m=st.by_month||[], f=st.by_file||[];
+  const mk=(cv,old,labels,data,label,color,type)=>{ if(old)old.destroy();
+    return new Chart(cv,{type,data:{labels,datasets:[{label,data,backgroundColor:color,borderColor:color,tension:.3,fill:false,borderRadius:5}]},
+      options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:"#eef1f5"}},x:{grid:{display:false}}},maintainAspectRatio:false}});
+  };
+  chM=mk(document.getElementById("chMonth"),chM,m.map(x=>x.month),m.map(x=>x.rows),"Records","#0aa05a","line");
+  chF=mk(document.getElementById("chFile"),chF,f.map(x=>x.file),f.map(x=>x.rows),"Records","#2f6df6","bar");
+}
+document.getElementById("trTable").onchange=renderTrends;
+
+/* ---------- tabs / chrome ---------- */
+function switchTab(name){
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));
+  ["overview","explore","trends"].forEach(s=>document.getElementById(s).classList.toggle("hidden",s!==name));
+  if(name==="trends")renderTrends();
+}
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+document.getElementById("refreshBtn").onclick=loadStats;
+</script>
 </body>
 </html>
