@@ -5,78 +5,111 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zip to Zip — Data Portal</title>
 <script src="https://accounts.google.com/gsi/client" async></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   :root{
-    --bg:#f5f7fa; --panel:#ffffff; --ink:#16202c; --muted:#6b7785; --line:#e6eaf0;
-    --brand:#0aa05a; --brand-d:#08824a; --brand-soft:#e7f7ee;
-    --blue:#2f6df6; --amber:#e8a93b; --red:#e0556b; --shadow:0 1px 2px rgba(16,32,48,.06),0 6px 20px rgba(16,32,48,.06);
+    --bg:#f4f6f9; --panel:#fff; --ink:#16202c; --muted:#69757f; --faint:#9aa6b1; --line:#e7ebf1;
+    --brand:#0aa05a; --brand-d:#08824a; --brand-soft:#e8f7ef;
+    --blue:#2f6df6; --blue-soft:#e8f0fe; --amber:#e8a93b; --amber-soft:#fdf3e0; --red:#e0556b; --red-soft:#fcebee;
+    --teal:#0fb5ae; --shadow:0 1px 2px rgba(16,32,48,.05),0 8px 24px rgba(16,32,48,.06);
+    --radius:13px;
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);}
-  a{color:var(--brand-d);text-decoration:none}
-  /* header */
-  header.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:12px 22px;}
-  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:.2px}
-  .logo{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--brand),#37c98a);display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px}
-  nav.tabs{display:flex;gap:4px;margin-left:8px}
-  nav.tabs button{border:0;background:none;color:var(--muted);font-weight:600;font-size:14px;padding:8px 12px;border-radius:8px;cursor:pointer}
+  html,body{height:100%}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+  /* ---------- header ---------- */
+  header.top{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.86);backdrop-filter:saturate(180%) blur(10px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:11px 24px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:750;letter-spacing:.2px}
+  .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--brand),#37c98a);display:grid;place-items:center;color:#fff;font-weight:800;box-shadow:0 2px 8px rgba(10,160,90,.35)}
+  nav.tabs{display:flex;gap:2px;margin-left:6px}
+  nav.tabs button{border:0;background:none;color:var(--muted);font-weight:600;padding:8px 14px;border-radius:9px;cursor:pointer;font-size:14px}
   nav.tabs button.active{background:var(--brand-soft);color:var(--brand-d)}
-  nav.tabs button:hover:not(.active){background:#f1f3f6;color:var(--ink)}
+  nav.tabs button:hover:not(.active){background:#eef1f5;color:var(--ink)}
   .spacer{flex:1}
-  .who{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:10px}
-  .btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink)}
-  .btn:hover{background:#f6f8fa}
+  .who{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:7px}
+  .who .av{width:24px;height:24px;border-radius:50%;background:var(--brand-soft);color:var(--brand-d);display:grid;place-items:center;font-weight:700;font-size:12px}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:0 13px;height:38px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+  .btn:hover{background:#f5f7fa;border-color:#d8dee6}
   .btn.brand{background:var(--brand);border-color:var(--brand);color:#fff}
   .btn.brand:hover{background:var(--brand-d)}
-  main{max-width:1240px;margin:0 auto;padding:22px}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+  .btn svg{width:15px;height:15px}
+  main{max-width:1280px;margin:0 auto;padding:24px}
   .hidden{display:none!important}
-  /* gate */
-  .gate{min-height:70vh;display:grid;place-items:center;text-align:center}
-  .gate .card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:40px 44px;max-width:440px}
-  .gate h1{margin:.2em 0 .1em;font-size:22px}
-  .gate p{color:var(--muted);margin:.2em 0 18px}
-  /* kpi strip */
-  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
-  .kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
-  .kpi .label{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-  .kpi .val{font-size:26px;font-weight:750;margin-top:6px}
-  .kpi .sub{font-size:12px;color:var(--muted);margin-top:3px}
-  /* cards grid */
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
-  .tcard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);cursor:pointer;transition:transform .08s,box-shadow .08s}
-  .tcard:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(16,32,48,.12)}
+  /* ---------- gate ---------- */
+  .gate{min-height:74vh;display:grid;place-items:center;text-align:center}
+  .gate .card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:42px 46px;max-width:430px}
+  .gate h1{margin:.4em 0 .2em;font-size:22px}
+  .gate p{color:var(--muted);margin:.2em 0 20px;line-height:1.55}
+  .gate .g_id_signin{display:flex;justify-content:center}
+  /* ---------- kpis ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi::after{content:"";position:absolute;right:-14px;top:-14px;width:52px;height:52px;border-radius:50%;background:var(--brand-soft)}
+  .kpi .label{font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .kpi .val{font-size:27px;font-weight:780;margin-top:7px;letter-spacing:-.5px}
+  .kpi .sub{font-size:12px;color:var(--faint);margin-top:3px}
+  /* ---------- overview cards ---------- */
+  .section-title{font-size:12px;font-weight:750;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:4px 0 12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+  .tcard{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:17px 18px;box-shadow:var(--shadow);cursor:pointer;transition:transform .09s,box-shadow .09s,border-color .09s}
+  .tcard:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(16,32,48,.13);border-color:#d8e0e8}
   .tcard h3{margin:0;font-size:15px;display:flex;align-items:center;gap:8px}
-  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
-  .dot.g{background:var(--brand)} .dot.a{background:var(--amber)} .dot.r{background:#9aa6b2}
-  .tcard .rows{font-size:28px;font-weight:750;margin:8px 0 2px}
-  .meta{font-size:12.5px;color:var(--muted);line-height:1.7}
-  .meta b{color:var(--ink);font-weight:600}
-  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
-  .chip{background:#f1f4f8;border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:11px;color:var(--muted)}
-  .section-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:6px 0 12px}
-  /* controls */
-  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px;box-shadow:var(--shadow)}
-  select,input[type=text],input[type=date]{border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13px;background:#fff;color:var(--ink)}
-  .controls .grow{flex:1;min-width:160px}
-  /* table */
-  .tablewrap{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:auto;max-height:66vh}
-  table.data{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px}
-  table.data th,table.data td{padding:8px 11px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;max-width:340px;overflow:hidden;text-overflow:ellipsis}
-  table.data th{position:sticky;top:0;background:#f7f9fb;font-weight:650;color:#33404e;cursor:pointer;user-select:none}
+  .tcard .openhint{margin-left:auto;color:var(--faint);font-size:12px;font-weight:600;opacity:0;transition:opacity .1s}
+  .tcard:hover .openhint{opacity:1}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none;box-shadow:0 0 0 3px rgba(0,0,0,.03)}
+  .dot.g{background:var(--brand)} .dot.a{background:var(--amber)} .dot.r{background:#aab4bd}
+  .tcard .rows{font-size:30px;font-weight:780;margin:9px 0 4px;letter-spacing:-.5px}
+  .meta{font-size:12.5px;color:var(--muted);line-height:1.75}
+  .meta b{color:var(--ink);font-weight:650}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px}
+  .chip{background:#f2f5f9;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:11px;color:var(--muted)}
+  /* ---------- explore ---------- */
+  .toolbar{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .field{display:flex;align-items:center;gap:7px;height:38px;border:1px solid var(--line);border-radius:10px;padding:0 6px 0 11px;background:#fff}
+  .field label{font-size:11px;color:var(--faint);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  .field select,.field input{border:0;outline:0;background:transparent;font-size:13.5px;color:var(--ink);height:36px}
+  select.bare,input.bare{border:1px solid var(--line);border-radius:10px;height:38px;padding:0 11px;font-size:13.5px;background:#fff;color:var(--ink);outline:0}
+  select.bare:focus,input.bare:focus,.field:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+  .search{flex:1;min-width:180px;position:relative;display:flex;align-items:center}
+  .search svg{position:absolute;left:11px;width:15px;height:15px;color:var(--faint)}
+  .search input{width:100%;height:38px;border:1px solid var(--line);border-radius:10px;padding:0 12px 0 33px;font-size:13.5px;outline:0;background:#fff}
+  .search input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+  .menu-wrap{position:relative}
+  .pop{position:absolute;top:calc(100% + 6px);z-index:50;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(16,32,48,.16);padding:6px;min-width:210px}
+  .pop.right{right:0}
+  .pop button.item{display:flex;width:100%;align-items:center;gap:10px;border:0;background:none;padding:9px 11px;border-radius:8px;font-size:13.5px;cursor:pointer;color:var(--ink);text-align:left}
+  .pop button.item:hover{background:#f3f6f9}
+  .colpop{max-height:320px;overflow:auto;min-width:240px}
+  .colpop .row{display:flex;align-items:center;gap:9px;padding:6px 9px;border-radius:8px;font-size:13px}
+  .colpop .row:hover{background:#f3f6f9}
+  .colpop .tools{display:flex;gap:6px;padding:4px 6px 8px;border-bottom:1px solid var(--line);margin-bottom:6px}
+  .metabar{display:flex;align-items:center;gap:10px;margin:0 2px 10px;font-size:13px;color:var(--muted)}
+  .pill{display:inline-flex;align-items:center;gap:6px;background:#f2f5f9;border:1px solid var(--line);border-radius:999px;padding:3px 11px;font-size:12px;color:var(--muted)}
+  .pill.warn{background:var(--amber-soft);border-color:#f3dca6;color:#9a6b12}
+  .tablewrap{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:auto;max-height:64vh}
+  table.data{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+  table.data th,table.data td{padding:10px 13px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;max-width:360px;overflow:hidden;text-overflow:ellipsis}
+  table.data th{position:sticky;top:0;background:#f7f9fb;font-weight:700;color:#46535f;cursor:pointer;user-select:none;font-size:12px;text-transform:uppercase;letter-spacing:.03em;z-index:1}
   table.data th:hover{background:#eef2f6}
+  table.data th.num,table.data td.num{text-align:right;font-variant-numeric:tabular-nums}
   table.data tbody tr:nth-child(even){background:#fbfcfe}
   table.data tbody tr:hover{background:var(--brand-soft)}
-  .pager{display:flex;align-items:center;gap:10px;justify-content:flex-end;margin-top:10px;font-size:13px;color:var(--muted)}
-  .muted{color:var(--muted)} .small{font-size:12px}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  .panelbox{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
-  .colmenu{position:relative}
-  .colpop{position:absolute;top:110%;left:0;z-index:30;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:10px;max-height:300px;overflow:auto;min-width:230px}
-  .colpop label{display:flex;gap:8px;align-items:center;font-size:13px;padding:4px 2px}
-  footer{max-width:1240px;margin:8px auto 30px;padding:0 22px;color:var(--muted);font-size:12px;display:flex;gap:8px;align-items:center}
-  .err{color:var(--red);font-size:13px;margin:8px 0}
-  @media(max-width:820px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+  td .money{font-variant-numeric:tabular-nums;font-weight:600}
+  .badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11.5px;font-weight:650;line-height:1.5}
+  .badge.g{background:var(--brand-soft);color:var(--brand-d)} .badge.b{background:var(--blue-soft);color:#1b4fd1}
+  .badge.a{background:var(--amber-soft);color:#9a6b12} .badge.r{background:var(--red-soft);color:#bb3b52}
+  .badge.n{background:#eef1f5;color:#5b6772}
+  .muted{color:var(--faint)} .small{font-size:12px}
+  .pager{display:flex;align-items:center;gap:8px;justify-content:flex-end;margin-top:12px;font-size:13px;color:var(--muted)}
+  .state{display:grid;place-items:center;padding:64px 0;color:var(--faint);text-align:center}
+  .spin{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:sp .8s linear infinite;margin-bottom:12px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  /* toast */
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#16202c;color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.25s;z-index:99;display:flex;gap:8px;align-items:center}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  footer{max-width:1280px;margin:6px auto 32px;padding:0 24px;color:var(--faint);font-size:12px;display:flex;gap:8px;align-items:center}
+  .err{color:var(--red);font-size:13px}
+  @media(max-width:820px){.kpis{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -85,23 +118,21 @@
   <nav class="tabs" id="tabs">
     <button data-tab="overview" class="active">Overview</button>
     <button data-tab="explore">Explore</button>
-    <button data-tab="trends">Trends</button>
   </nav>
   <div class="spacer"></div>
   <div class="who" id="who"></div>
   <div id="gbtn"><div id="g_id_onload" data-client_id="32168089642-fkk3rglncf6hl5ikq7pi6jbornug1kbb.apps.googleusercontent.com" data-callback="onSignIn" data-auto_prompt="false"></div><div class="g_id_signin" data-type="standard" data-size="medium"></div></div>
-  <button class="btn hidden" id="refreshBtn">↻ Refresh</button>
+  <button class="btn ghost hidden" id="refreshBtn" title="Refresh data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button>
 </header>
 
 <main>
-  <!-- gate -->
   <section id="gate" class="gate">
     <div class="card">
-      <div class="logo" style="width:46px;height:46px;font-size:22px;margin:0 auto 14px">Z</div>
+      <div class="logo" style="width:48px;height:48px;font-size:22px;margin:0 auto 16px">Z</div>
       <h1>Sign in to the Data Portal</h1>
-      <p>Use your <b>@ziptozipmoving.com</b> Google account. The data is read-only and refreshed automatically.</p>
-      <div id="g_id_signin2" class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black"></div>
-      <div class="err" id="gateErr"></div>
+      <p>Use your <b>@ziptozipmoving.com</b> Google account.<br>The data is read-only and refreshed automatically.</p>
+      <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-shape="pill"></div>
+      <div class="err" id="gateErr" style="margin-top:12px"></div>
     </div>
   </section>
 
@@ -109,213 +140,208 @@
     <!-- OVERVIEW -->
     <section id="overview">
       <div class="kpis" id="kpis"></div>
-      <div class="section-title">Datasets — health & freshness</div>
+      <div class="section-title">Datasets — health &amp; freshness</div>
       <div class="grid" id="cards"></div>
     </section>
 
     <!-- EXPLORE -->
     <section id="explore" class="hidden">
-      <div class="controls">
-        <select id="exTable" class="grow"></select>
-        <div class="colmenu"><button class="btn" id="colBtn">Columns ▾</button><div class="colpop hidden" id="colPop"></div></div>
-        <input type="date" id="exSince" title="Show rows on/after this date">
-        <select id="exLimit" title="Max rows to load">
-          <option value="1000">1,000 rows</option>
-          <option value="10000">10,000 rows</option>
-          <option value="50000">50,000 rows</option>
-          <option value="1000000">All rows</option>
+      <div class="toolbar">
+        <select class="bare" id="exTable" style="font-weight:650"></select>
+        <div class="menu-wrap">
+          <button class="btn" id="colBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Columns</button>
+          <div class="pop colpop hidden" id="colPop"></div>
+        </div>
+        <div class="field"><label>From</label><input type="date" id="exSince"></div>
+        <select class="bare" id="exLimit" title="Max rows to load">
+          <option value="1000">1,000 rows</option><option value="10000">10,000 rows</option>
+          <option value="50000">50,000 rows</option><option value="1000000">All rows</option>
         </select>
-        <input type="text" id="exSearch" class="grow" placeholder="Search loaded rows…">
         <button class="btn brand" id="exLoad">Load</button>
-        <span class="spacer"></span>
-        <button class="btn" id="dlCsv">⬇ CSV</button>
-        <button class="btn" id="dlJson">⬇ JSON</button>
+        <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="exSearch" placeholder="Search loaded rows…"></div>
+        <div class="menu-wrap">
+          <button class="btn" id="expBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg> Export <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px"><path d="m6 9 6 6 6-6"/></svg></button>
+          <div class="pop right hidden" id="expPop">
+            <button class="item" data-x="csv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg> Download CSV</button>
+            <button class="item" data-x="json"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg> Download JSON</button>
+            <button class="item" data-x="copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> Copy to clipboard</button>
+          </div>
+        </div>
       </div>
-      <div id="exMeta" class="small muted" style="margin-bottom:8px"></div>
-      <div class="tablewrap"><table class="data" id="exGrid"></table></div>
+      <div class="metabar" id="exMeta"></div>
+      <div class="tablewrap"><div id="exBody"></div></div>
       <div class="pager" id="exPager"></div>
-    </section>
-
-    <!-- TRENDS -->
-    <section id="trends" class="hidden">
-      <div class="controls">
-        <select id="trTable" class="grow"></select>
-        <span class="muted small">Counts come from dataset metadata — instant, full-dataset accurate.</span>
-      </div>
-      <div class="grid2">
-        <div class="panelbox"><div class="section-title">Records per month</div><canvas id="chMonth" height="150"></canvas></div>
-        <div class="panelbox"><div class="section-title">Records per source file</div><canvas id="chFile" height="150"></canvas></div>
-      </div>
     </section>
   </div>
 </main>
-<footer>
-  <span>🔒 Read-only · secured by company Google sign-in</span><span class="spacer" style="flex:1"></span>
-  <span id="genAt"></span>
-</footer>
+
+<footer><span>🔒 Read-only · secured by company Google sign-in</span><span class="spacer" style="flex:1"></span><span id="genAt"></span></footer>
+<div id="toast"></div>
 
 <script>
-const API = "https://ztz-bridge-32168089642.us-east4.run.app";
-let TOKEN=null, STATS=null;
+const API="https://ztz-bridge-32168089642.us-east4.run.app";
+let TOKEN=null,STATS=null;
 const LABELS={angi_leads:"Angi Leads",thumbtack_leads:"Thumbtack Leads",ringcentral_calls:"RingCentral Calls",
   ringcentral_sms:"RingCentral SMS",callrail_calls:"CallRail Calls",moveboard:"Moveboard (Jobs)",hatch:"Hatch"};
 const pretty=t=>LABELS[t]||t.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
 const fmtN=n=>Number(n).toLocaleString();
-function ago(s){ if(!s) return "—"; const d=new Date(s.replace(" ","T")+"Z"); const m=(Date.now()-d.getTime())/6e4;
-  if(m<60)return Math.max(1,Math.round(m))+"m ago"; const h=m/60; if(h<24)return Math.round(h)+"h ago";
-  const dd=h/24; if(dd<30)return Math.round(dd)+"d ago"; return Math.round(dd/30)+"mo ago"; }
-function statusDot(s){ if(!s)return"r"; const d=(Date.now()-new Date(s.replace(" ","T")+"Z").getTime())/864e5;
-  return d<7?"g":d<30?"a":"r"; }
-function dOnly(s){ return s? s.slice(0,10):"—"; }
+function ago(s){if(!s)return"—";const d=new Date(s.replace(" ","T")+"Z");const m=(Date.now()-d)/6e4;
+  if(m<60)return Math.max(1,Math.round(m))+"m ago";const h=m/60;if(h<24)return Math.round(h)+"h ago";
+  const dd=h/24;if(dd<30)return Math.round(dd)+"d ago";return Math.round(dd/30)+"mo ago";}
+function statusDot(s){if(!s)return"r";const d=(Date.now()-new Date(s.replace(" ","T")+"Z"))/864e5;return d<7?"g":d<30?"a":"r";}
+function dOnly(s){return s?s.slice(0,10):"—";}
+function toast(msg){const t=document.getElementById("toast");t.innerHTML="✓ "+msg;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2200);}
 
-async function api(path){
-  const r=await fetch(API+path,{headers:{Authorization:"Bearer "+TOKEN}});
-  if(!r.ok) throw new Error("HTTP "+r.status+": "+(await r.text()));
-  return r.json();
-}
+async function api(path){const r=await fetch(API+path,{headers:{Authorization:"Bearer "+TOKEN}});
+  if(!r.ok)throw new Error("HTTP "+r.status+": "+(await r.text()));return r.json();}
 
-window.onSignIn = async (resp)=>{
+window.onSignIn=async(resp)=>{
   TOKEN=resp.credential;
-  try{
-    const me=JSON.parse(atob(TOKEN.split(".")[1]));
-    document.getElementById("who").textContent=me.email||"";
-  }catch(e){}
+  let email="";try{email=JSON.parse(atob(TOKEN.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))).email||"";}catch(e){}
+  document.getElementById("who").innerHTML=email?`<span class="av">${email[0].toUpperCase()}</span>${email}`:"";
   document.getElementById("gbtn").classList.add("hidden");
   document.getElementById("refreshBtn").classList.remove("hidden");
-  await loadStats();
+  try{await loadStats();}catch(e){document.getElementById("gateErr").textContent=e.message;return;}
   document.getElementById("gate").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
 };
 
 async function loadStats(){
-  try{
-    STATS=await api("/api/_stats");
-  }catch(e){ document.getElementById("gateErr").textContent=e.message; throw e; }
-  renderOverview(); fillSelectors();
+  STATS=await api("/api/_stats");
+  renderOverview();fillSelectors();
   document.getElementById("genAt").textContent="Snapshot: "+new Date(STATS.generated_at).toLocaleString();
 }
-
+const kpi=(l,v,s)=>`<div class="kpi"><div class="label">${l}</div><div class="val">${v}</div><div class="sub">${s||""}</div></div>`;
 function renderOverview(){
   const T=STATS.tables;
   const totalRows=T.reduce((a,t)=>a+t.rows,0);
   const lastUpd=T.map(t=>t.last_update).filter(Boolean).sort().slice(-1)[0];
   const files=T.reduce((a,t)=>a+(t.by_file?t.by_file.length:0),0);
-  document.getElementById("kpis").innerHTML=`
-    ${kpi("Total records",fmtN(totalRows),"across all datasets")}
-    ${kpi("Datasets",T.length,"live tables")}
-    ${kpi("Source files",files,"loaded exports")}
-    ${kpi("Last updated",ago(lastUpd),lastUpd?("on "+dOnly(lastUpd)):"")}`;
+  document.getElementById("kpis").innerHTML=
+    kpi("Total records",fmtN(totalRows),"across all datasets")+
+    kpi("Datasets",T.length,"live tables")+
+    kpi("Source files",files,"loaded exports")+
+    kpi("Last updated",ago(lastUpd),lastUpd?("on "+dOnly(lastUpd)):"");
   document.getElementById("cards").innerHTML=T.map(t=>{
-    const d=statusDot(t.last_update);
     const chips=(t.by_file||[]).slice(0,8).map(f=>`<span class="chip">${f.file}: ${fmtN(f.rows)}</span>`).join("");
     return `<div class="tcard" data-table="${t.table}">
-      <h3><span class="dot ${d}"></span>${pretty(t.table)}</h3>
+      <h3><span class="dot ${statusDot(t.last_update)}"></span>${pretty(t.table)}<span class="openhint">Explore →</span></h3>
       <div class="rows">${fmtN(t.rows)}</div>
       <div class="meta">
         <div>Updated <b>${ago(t.last_update)}</b> <span class="muted">(${dOnly(t.last_update)})</span></div>
-        <div>Coverage <b>${dOnly(t.date_min)}</b> → <b>${dOnly(t.date_max)}</b> <span class="muted">(${t.date_col||"—"})</span></div>
+        <div>Coverage <b>${dOnly(t.date_min)}</b> → <b>${dOnly(t.date_max)}</b></div>
         <div><b>${t.columns}</b> columns · <b>${(t.by_file||[]).length}</b> source file(s)</div>
-      </div>
-      <div class="chips">${chips}</div>
-    </div>`;
+      </div><div class="chips">${chips}</div></div>`;
   }).join("");
-  document.querySelectorAll(".tcard").forEach(c=>c.onclick=()=>{ document.getElementById("exTable").value=c.dataset.table; switchTab("explore"); onTableChange(); loadTable(); });
+  document.querySelectorAll(".tcard").forEach(c=>c.onclick=()=>{document.getElementById("exTable").value=c.dataset.table;switchTab("explore");onTableChange();loadTable();});
 }
-const kpi=(l,v,s)=>`<div class="kpi"><div class="label">${l}</div><div class="val">${v}</div><div class="sub">${s||""}</div></div>`;
-
 function fillSelectors(){
-  const opts=STATS.tables.map(t=>`<option value="${t.table}">${pretty(t.table)}</option>`).join("");
-  exTable.innerHTML=opts; trTable.innerHTML=opts;
-  onTableChange(); renderTrends();
+  document.getElementById("exTable").innerHTML=STATS.tables.map(t=>`<option value="${t.table}">${pretty(t.table)}</option>`).join("");
+  onTableChange();
 }
 
 /* ---------- Explore ---------- */
-let curRows=[], curCols=[], chosenCols=[], sortKey=null, sortDir=1, page=0; const PAGE=100;
-function statForTable(t){ return STATS.tables.find(x=>x.table===t); }
-function onTableChange(){
-  const t=exTable.value, st=statForTable(t);
-  // build column picker from a quick schema probe via first load; default checked = first 10
-  // we get columns lazily on first load; for now reset
-  chosenCols=[]; sortKey=null; page=0;
-  exSince.value=""; document.getElementById("colPop").innerHTML="<div class='muted small'>Load once to list columns…</div>";
+let curRows=[],curCols=[],chosenCols=[],sortKey=null,sortDir=1,page=0;const PAGE=100;
+const statForTable=t=>STATS.tables.find(x=>x.table===t);
+const CUR=/(total|cost|price|tax|quote|payment|charge|valuation|tips|amount|revenue|\bnet\b|\bfee\b)/i;
+const NUMC=/(^#$|count|number|qty|score|duration|segment|response time|trucks|crew|lbs|c\.f)/i;
+const STAT=/status|flag/i;
+const SCOL={booked:"g",completed:"g",won:"g",paid:"g",active:"g",quote:"b",new:"b",open:"b","in progress":"b",pending:"a",hold:"a",scheduled:"a",cancelled:"r",canceled:"r",lost:"r",refunded:"r",failed:"r"};
+const isNum=v=>v!==null&&v!==""&&!isNaN(Number(String(v).replace(/[,$\s]/g,"")));
+const money=v=>Number(String(v).replace(/[,$\s]/g,"")).toLocaleString(undefined,{style:"currency",currency:"USD"});
+const isDate=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2})?/.test(v);
+function fmtDate(v){const t=/\d{2}:\d{2}/.test(v);const d=new Date(v.replace(" ","T"));if(isNaN(d))return v;
+  let s=d.toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"});
+  if(t)s+=" · "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});return s;}
+const rightAlign=c=>CUR.test(c)||NUMC.test(c);
+function cell(c,v){
+  if(v===null||v===undefined||v==="")return '<span class="muted">—</span>';
+  if(STAT.test(c)){const k=String(v).toLowerCase().trim();return `<span class="badge ${SCOL[k]||"n"}">${v}</span>`;}
+  if(CUR.test(c)&&isNum(v))return `<span class="money">${money(v)}</span>`;
+  if(isDate(String(v)))return fmtDate(String(v));
+  return String(v);
 }
+function onTableChange(){chosenCols=[];sortKey=null;page=0;document.getElementById("exSince").value="";
+  document.getElementById("colPop").innerHTML="<div class='muted small' style='padding:6px 9px'>Load once to choose columns…</div>";
+  document.getElementById("exMeta").innerHTML="";document.getElementById("exBody").innerHTML="";document.getElementById("exPager").innerHTML="";}
 async function loadTable(){
-  const t=exTable.value, lim=exLimit.value, since=exSince.value;
+  const t=document.getElementById("exTable").value,lim=document.getElementById("exLimit").value,since=document.getElementById("exSince").value;
   let path=`/api/${encodeURIComponent(t)}?limit=${lim}`;
-  if(chosenCols.length) path+=`&cols=${encodeURIComponent(chosenCols.join(","))}`;
-  const st=statForTable(t);
-  if(since && st && st.date_col) path+=`&since=${since}&since_col=${encodeURIComponent(st.date_col)}`;
-  exMeta.textContent="Loading…";
+  if(chosenCols.length)path+=`&cols=${encodeURIComponent(chosenCols.join(","))}`;
+  const st=statForTable(t);if(since&&st&&st.date_col)path+=`&since=${since}&since_col=${encodeURIComponent(st.date_col)}`;
+  document.getElementById("exBody").innerHTML='<div class="state"><div class="spin"></div>Loading '+pretty(t)+'…</div>';
+  document.getElementById("exMeta").innerHTML="";document.getElementById("exPager").innerHTML="";
   try{
     const data=await api(path);
-    curRows=data.rows||[]; curCols=curRows.length?Object.keys(curRows[0]):[];
-    if(!chosenCols.length) buildColMenu(curCols);
-    sortKey=null; page=0;
-    exMeta.innerHTML=`<b>${fmtN(data.count)}</b> rows loaded${data.truncated?` · <span style="color:var(--amber)">capped at limit — narrow with a date or higher limit</span>`:""}`;
+    curRows=data.rows||[];curCols=curRows.length?Object.keys(curRows[0]):[];
+    if(!chosenCols.length)buildColMenu(curCols);
+    sortKey=null;page=0;
+    document.getElementById("exMeta").innerHTML=`<span class="pill">▦ <b style="color:var(--ink)">${fmtN(data.count)}</b>&nbsp;rows</span>`+
+      (data.truncated?`<span class="pill warn">capped at limit — add a date filter for more</span>`:"")+
+      (since?`<span class="pill">since ${since}</span>`:"");
     renderGrid();
-  }catch(e){ exMeta.innerHTML=`<span class="err">${e.message}</span>`; }
+  }catch(e){document.getElementById("exBody").innerHTML=`<div class="state"><span class="err">${e.message}</span></div>`;}
 }
 function buildColMenu(cols){
   const pop=document.getElementById("colPop");
-  pop.innerHTML=cols.map(c=>`<label><input type="checkbox" value="${c.replace(/"/g,'&quot;')}" checked> ${c}</label>`).join("");
-  pop.querySelectorAll("input").forEach(cb=>cb.onchange=()=>{ chosenCols=[...pop.querySelectorAll("input:checked")].map(x=>x.value); });
+  pop.innerHTML=`<div class="tools"><button class="btn ghost small" id="colAll">All</button><button class="btn ghost small" id="colNone">None</button></div>`+
+    cols.map(c=>`<label class="row"><input type="checkbox" value="${c.replace(/"/g,'&quot;')}" checked> ${c}</label>`).join("");
+  const sync=()=>{chosenCols=[...pop.querySelectorAll("input:checked")].map(x=>x.value);};
+  pop.querySelectorAll("input").forEach(cb=>cb.onchange=sync);
+  pop.querySelector("#colAll").onclick=()=>{pop.querySelectorAll("input").forEach(x=>x.checked=true);sync();};
+  pop.querySelector("#colNone").onclick=()=>{pop.querySelectorAll("input").forEach(x=>x.checked=false);sync();};
   chosenCols=cols.slice();
 }
-function filteredRows(){
-  const q=exSearch.value.trim().toLowerCase();
-  let rows=curRows;
-  if(q) rows=rows.filter(r=>Object.values(r).some(v=>String(v??"").toLowerCase().includes(q)));
-  if(sortKey){ rows=[...rows].sort((a,b)=>{const x=a[sortKey],y=b[sortKey];
-    if(x==null)return 1; if(y==null)return -1; const nx=parseFloat(x),ny=parseFloat(y);
-    const both=!isNaN(nx)&&!isNaN(ny); return (both? nx-ny : String(x).localeCompare(String(y)))*sortDir;}); }
+function viewRows(){
+  const q=document.getElementById("exSearch").value.trim().toLowerCase();
+  let rows=q?curRows.filter(r=>Object.values(r).some(v=>String(v??"").toLowerCase().includes(q))):curRows;
+  if(sortKey)rows=[...rows].sort((a,b)=>{let x=a[sortKey],y=b[sortKey];if(x==null)return 1;if(y==null)return -1;
+    const nx=parseFloat(String(x).replace(/[,$]/g,"")),ny=parseFloat(String(y).replace(/[,$]/g,""));
+    const both=!isNaN(nx)&&!isNaN(ny);return(both?nx-ny:String(x).localeCompare(String(y)))*sortDir;});
   return rows;
 }
 function renderGrid(){
-  const rows=filteredRows(); const cols=curCols;
-  const start=page*PAGE, slice=rows.slice(start,start+PAGE);
-  const head="<thead><tr>"+cols.map(c=>`<th data-k="${c.replace(/"/g,'&quot;')}">${c}${sortKey===c?(sortDir>0?" ▲":" ▼"):""}</th>`).join("")+"</tr></thead>";
-  const body="<tbody>"+slice.map(r=>"<tr>"+cols.map(c=>`<td title="${String(r[c]??"").replace(/"/g,'&quot;')}">${r[c]??""}</td>`).join("")+"</tr>").join("")+"</tbody>";
-  exGrid.innerHTML=head+body;
-  exGrid.querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k; if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=1;} page=0; renderGrid();});
-  const tot=rows.length, end=Math.min(start+PAGE,tot);
-  exPager.innerHTML=`${tot?start+1:0}–${end} of ${fmtN(tot)} &nbsp; <button class="btn" id="pp" ${page<=0?"disabled":""}>‹ Prev</button> <button class="btn" id="pn" ${end>=tot?"disabled":""}>Next ›</button>`;
+  const rows=viewRows(),cols=curCols,start=page*PAGE,slice=rows.slice(start,start+PAGE);
+  if(!curRows.length){document.getElementById("exBody").innerHTML='<div class="state">No rows. Click <b style="color:var(--ink);margin:0 4px">Load</b> to fetch data.</div>';return;}
+  const head="<thead><tr>"+cols.map(c=>`<th class="${rightAlign(c)?'num':''}" data-k="${c.replace(/"/g,'&quot;')}">${c}${sortKey===c?(sortDir>0?" ↑":" ↓"):""}</th>`).join("")+"</tr></thead>";
+  const body="<tbody>"+slice.map(r=>"<tr>"+cols.map(c=>`<td class="${rightAlign(c)?'num':''}" title="${String(r[c]??"").replace(/"/g,'&quot;')}">${cell(c,r[c])}</td>`).join("")+"</tr>").join("")+"</tbody>";
+  document.getElementById("exBody").innerHTML=`<table class="data">${head}${body}</table>`;
+  document.querySelectorAll("#exBody th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=1;}page=0;renderGrid();});
+  const tot=rows.length,end=Math.min(start+PAGE,tot);
+  document.getElementById("exPager").innerHTML=`<span>${tot?start+1:0}–${end} of <b style="color:var(--ink)">${fmtN(tot)}</b></span>
+    <button class="btn" id="pp" ${page<=0?"disabled":""}>‹</button><button class="btn" id="pn" ${end>=tot?"disabled":""}>›</button>`;
   const pp=document.getElementById("pp"),pn=document.getElementById("pn");
-  if(pp)pp.onclick=()=>{page--;renderGrid();}; if(pn)pn.onclick=()=>{page++;renderGrid();};
+  if(pp)pp.onclick=()=>{page--;renderGrid();};if(pn)pn.onclick=()=>{page++;renderGrid();};
 }
-function toCSV(rows){ if(!rows.length)return""; const cols=Object.keys(rows[0]);
-  const esc=v=>{v=v==null?"":String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
-  return cols.join(",")+"\n"+rows.map(r=>cols.map(c=>esc(r[c])).join(",")).join("\n"); }
-function download(name,text,type){ const b=new Blob([text],{type}); const u=URL.createObjectURL(b);
-  const a=document.createElement("a"); a.href=u; a.download=name; a.click(); URL.revokeObjectURL(u); }
-document.getElementById("dlCsv").onclick=()=>download(exTable.value+".csv",toCSV(filteredRows()),"text/csv");
-document.getElementById("dlJson").onclick=()=>download(exTable.value+".json",JSON.stringify(filteredRows(),null,2),"application/json");
-document.getElementById("exLoad").onclick=loadTable;
-document.getElementById("exSearch").oninput=()=>{page=0;renderGrid();};
-document.getElementById("exTable").onchange=()=>{onTableChange();};
-document.getElementById("colBtn").onclick=()=>document.getElementById("colPop").classList.toggle("hidden");
-
-/* ---------- Trends ---------- */
-let chM=null,chF=null;
-function renderTrends(){
-  const t=trTable.value, st=statForTable(t); if(!st)return;
-  const m=st.by_month||[], f=st.by_file||[];
-  const mk=(cv,old,labels,data,label,color,type)=>{ if(old)old.destroy();
-    return new Chart(cv,{type,data:{labels,datasets:[{label,data,backgroundColor:color,borderColor:color,tension:.3,fill:false,borderRadius:5}]},
-      options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:"#eef1f5"}},x:{grid:{display:false}}},maintainAspectRatio:false}});
-  };
-  chM=mk(document.getElementById("chMonth"),chM,m.map(x=>x.month),m.map(x=>x.rows),"Records","#0aa05a","line");
-  chF=mk(document.getElementById("chFile"),chF,f.map(x=>x.file),f.map(x=>x.rows),"Records","#2f6df6","bar");
+function toCSV(rows){if(!rows.length)return"";const cols=Object.keys(rows[0]);
+  const esc=v=>{v=v==null?"":String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  return cols.join(",")+"\n"+rows.map(r=>cols.map(c=>esc(r[c])).join(",")).join("\n");}
+function dl(name,text,type){const b=new Blob([text],{type});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
+function doExport(kind){
+  const rows=viewRows(),t=document.getElementById("exTable").value;
+  if(!rows.length){toast("Nothing to export — load data first");return;}
+  if(kind==="csv"){dl(t+".csv",toCSV(rows),"text/csv");toast(fmtN(rows.length)+" rows → CSV");}
+  else if(kind==="json"){dl(t+".json",JSON.stringify(rows,null,2),"application/json");toast(fmtN(rows.length)+" rows → JSON");}
+  else if(kind==="copy"){navigator.clipboard.writeText(toCSV(rows)).then(()=>toast(fmtN(rows.length)+" rows copied"));}
+  document.getElementById("expPop").classList.add("hidden");
 }
-document.getElementById("trTable").onchange=renderTrends;
 
-/* ---------- tabs / chrome ---------- */
+/* ---------- chrome / events ---------- */
 function switchTab(name){
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));
-  ["overview","explore","trends"].forEach(s=>document.getElementById(s).classList.toggle("hidden",s!==name));
-  if(name==="trends")renderTrends();
+  document.getElementById("overview").classList.toggle("hidden",name!=="overview");
+  document.getElementById("explore").classList.toggle("hidden",name!=="explore");
 }
 document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
-document.getElementById("refreshBtn").onclick=loadStats;
+document.getElementById("refreshBtn").onclick=()=>{document.getElementById("refreshBtn").style.opacity=.5;loadStats().finally(()=>document.getElementById("refreshBtn").style.opacity=1);toast("Refreshed");};
+document.getElementById("exLoad").onclick=loadTable;
+document.getElementById("exTable").onchange=onTableChange;
+document.getElementById("exSearch").oninput=()=>{page=0;renderGrid();};
+document.getElementById("colBtn").onclick=e=>{e.stopPropagation();document.getElementById("colPop").classList.toggle("hidden");document.getElementById("expPop").classList.add("hidden");};
+document.getElementById("expBtn").onclick=e=>{e.stopPropagation();document.getElementById("expPop").classList.toggle("hidden");document.getElementById("colPop").classList.add("hidden");};
+document.querySelectorAll("#expPop .item").forEach(b=>b.onclick=()=>doExport(b.dataset.x));
+document.addEventListener("click",()=>{document.getElementById("colPop").classList.add("hidden");document.getElementById("expPop").classList.add("hidden");});
+document.getElementById("colPop").addEventListener("click",e=>e.stopPropagation());
 </script>
 </body>
 </html>
