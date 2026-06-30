@@ -153,7 +153,7 @@
   </nav>
   <div class="spacer"></div>
   <div class="who" id="who"></div>
-  <div id="gbtn"><div id="g_id_onload" data-client_id="32168089642-fkk3rglncf6hl5ikq7pi6jbornug1kbb.apps.googleusercontent.com" data-callback="onSignIn" data-auto_prompt="false"></div><div class="g_id_signin" data-type="standard" data-size="medium"></div></div>
+  <div id="gbtn"><div id="g_id_onload" data-client_id="32168089642-fkk3rglncf6hl5ikq7pi6jbornug1kbb.apps.googleusercontent.com" data-callback="onSignIn" data-auto_prompt="false" data-auto_select="true"></div><div class="g_id_signin" data-type="standard" data-size="medium"></div></div>
   <button class="btn ghost hidden" id="refreshBtn" title="Refresh data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button>
 </header>
 
@@ -229,17 +229,25 @@ function dOnly(s){return s?s.slice(0,10):"—";}
 function toast(msg){const t=document.getElementById("toast");t.innerHTML="✓ "+msg;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2200);}
 
 async function api(path){const r=await fetch(API+path,{headers:{Authorization:"Bearer "+TOKEN}});
-  if(!r.ok)throw new Error("HTTP "+r.status+": "+(await r.text()));return r.json();}
+  if(!r.ok){if(r.status===401){logout();}throw new Error("HTTP "+r.status+": "+(await r.text()));}return r.json();}
+function decodeJwt(t){try{return JSON.parse(atob(t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")));}catch(e){return {};}}
+function tokenValid(t){const p=decodeJwt(t);return !!(p.exp&&p.exp*1000>Date.now()+30000);}
+function logout(){TOKEN=null;try{localStorage.removeItem("ztz_tok");}catch(e){}
+  document.getElementById("who").innerHTML="";document.getElementById("gbtn").classList.remove("hidden");
+  document.getElementById("refreshBtn").classList.add("hidden");switchTab("overview");}
 
-window.onSignIn=async(resp)=>{
-  TOKEN=resp.credential;
-  let email="";try{email=JSON.parse(atob(TOKEN.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))).email||"";}catch(e){}
+async function applySession(token){
+  TOKEN=token; try{localStorage.setItem("ztz_tok",token);}catch(e){}
+  const email=(decodeJwt(token).email||"");
   document.getElementById("who").innerHTML=email?`<span class="av">${email[0].toUpperCase()}</span>${email}`:"";
   document.getElementById("gbtn").classList.add("hidden");
   document.getElementById("refreshBtn").classList.remove("hidden");
-  try{await loadStats();}catch(e){document.getElementById("gateErr").textContent=e.message;return;}
+  try{await loadStats();}catch(e){document.getElementById("gateErr").textContent=e.message;logout();return;}
   switchTab("overview");
-};
+}
+window.onSignIn=(resp)=>applySession(resp.credential);
+function restoreSession(){let t=null;try{t=localStorage.getItem("ztz_tok");}catch(e){}
+  if(t&&tokenValid(t))applySession(t);}
 
 async function loadStats(){
   STATS=await api("/api/_stats");
@@ -278,19 +286,30 @@ function nextRefreshStr(){
   const h=Math.floor(until/60), m=until%60;
   return (h?h+"h ":"")+m+"m";
 }
+let _refreshing=false;
 function renderRefreshBar(){
   const el=document.getElementById("refreshBar");
+  if(_refreshing){el.innerHTML=`<span class="dotlive"></span><span><b>Refreshing…</b> pulling the latest data — the overview updates automatically when it's ready (a few minutes).</span>`;return;}
   el.innerHTML=`<span class="dotlive"></span><span>Data auto-refreshes every 6 hours · <b>next in ${nextRefreshStr()}</b></span><span style="flex:1"></span><button class="btn brand" id="refreshNow">↻ Refresh data now</button>`;
-  document.getElementById("refreshNow").onclick=function(){doDataRefresh(this);};
+  document.getElementById("refreshNow").onclick=()=>doDataRefresh();
 }
-async function doDataRefresh(btn){
-  const old=btn.innerHTML; btn.disabled=true; btn.innerHTML="Refreshing…";
+function dataSig(){return STATS?STATS.tables.map(t=>t.table+":"+t.rows+":"+t.last_update).join("|"):"";}
+async function doDataRefresh(){
+  _refreshing=true; renderRefreshBar();
   try{
     const r=await fetch(API+"/api/refresh",{method:"POST",headers:{Authorization:"Bearer "+TOKEN}});
+    if(r.status===401){logout();return;}
     const j=await r.json(); if(!r.ok) throw new Error(j.error||("HTTP "+r.status));
-    toast(j.message||"Refresh started");
-  }catch(e){ toast("Refresh failed: "+e.message); }
-  setTimeout(()=>{btn.disabled=false;btn.innerHTML=old;},10000);
+    toast(j.message||"Refresh started"); pollAfterRefresh();
+  }catch(e){ _refreshing=false; renderRefreshBar(); toast("Refresh failed: "+e.message); }
+}
+function pollAfterRefresh(){
+  const before=dataSig(); let n=0;
+  const iv=setInterval(async()=>{ n++;
+    try{await loadStats();}catch(e){clearInterval(iv);_refreshing=false;renderRefreshBar();return;}
+    if(dataSig()!==before){clearInterval(iv);_refreshing=false;renderRefreshBar();toast("Overview updated with fresh data");}
+    else if(n>=12){clearInterval(iv);_refreshing=false;renderRefreshBar();}
+  },30000);
 }
 function fillSelectors(){
   document.getElementById("exTable").innerHTML=STATS.tables.map(t=>`<option value="${t.table}">${pretty(t.table)}</option>`).join("");
@@ -501,6 +520,7 @@ document.getElementById("expBtn").onclick=e=>{e.stopPropagation();document.getEl
 document.querySelectorAll("#expPop .item").forEach(b=>b.onclick=()=>doExport(b.dataset.x));
 document.addEventListener("click",()=>{document.getElementById("colPop").classList.add("hidden");document.getElementById("expPop").classList.add("hidden");});
 document.getElementById("colPop").addEventListener("click",e=>e.stopPropagation());
+restoreSession();   // reuse a still-valid token so we don't re-prompt every reload
 </script>
 </body>
 </html>
