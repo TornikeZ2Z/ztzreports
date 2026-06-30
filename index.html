@@ -52,6 +52,9 @@
   .kpi .label{font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
   .kpi .val{font-size:27px;font-weight:780;margin-top:7px;letter-spacing:-.5px}
   .kpi .sub{font-size:12px;color:var(--faint);margin-top:3px}
+  .refreshbar{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:11px 16px;margin-bottom:16px;font-size:13.5px;color:var(--muted)}
+  .refreshbar .dotlive{width:8px;height:8px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 3px var(--brand-soft);flex:none}
+  .refreshbar b{color:var(--ink);font-weight:650}
   /* ---------- overview cards ---------- */
   .section-title{font-size:12px;font-weight:750;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:4px 0 12px}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
@@ -168,6 +171,7 @@
   <div id="app" class="hidden">
     <!-- OVERVIEW -->
     <section id="overview">
+      <div id="refreshBar" class="refreshbar"></div>
       <div class="kpis" id="kpis"></div>
       <div class="section-title">Datasets — health &amp; freshness</div>
       <div class="grid" id="cards"></div>
@@ -265,6 +269,28 @@ function renderOverview(){
       </div><div class="chips">${chips}</div></div>`;
   }).join("");
   document.querySelectorAll(".tcard").forEach(c=>c.onclick=()=>{document.getElementById("exTable").value=c.dataset.table;switchTab("explore");onTableChange();loadTable();});
+  renderRefreshBar();
+}
+function nextRefreshStr(){
+  const et=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+  const mins=et.getHours()*60+et.getMinutes();
+  const until=(Math.floor(mins/360)+1)*360-mins;
+  const h=Math.floor(until/60), m=until%60;
+  return (h?h+"h ":"")+m+"m";
+}
+function renderRefreshBar(){
+  const el=document.getElementById("refreshBar");
+  el.innerHTML=`<span class="dotlive"></span><span>Data auto-refreshes every 6 hours · <b>next in ${nextRefreshStr()}</b></span><span style="flex:1"></span><button class="btn brand" id="refreshNow">↻ Refresh data now</button>`;
+  document.getElementById("refreshNow").onclick=function(){doDataRefresh(this);};
+}
+async function doDataRefresh(btn){
+  const old=btn.innerHTML; btn.disabled=true; btn.innerHTML="Refreshing…";
+  try{
+    const r=await fetch(API+"/api/refresh",{method:"POST",headers:{Authorization:"Bearer "+TOKEN}});
+    const j=await r.json(); if(!r.ok) throw new Error(j.error||("HTTP "+r.status));
+    toast(j.message||"Refresh started");
+  }catch(e){ toast("Refresh failed: "+e.message); }
+  setTimeout(()=>{btn.disabled=false;btn.innerHTML=old;},10000);
 }
 function fillSelectors(){
   document.getElementById("exTable").innerHTML=STATS.tables.map(t=>`<option value="${t.table}">${pretty(t.table)}</option>`).join("");
