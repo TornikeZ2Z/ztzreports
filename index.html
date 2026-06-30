@@ -89,13 +89,17 @@
   .pill.warn{background:var(--amber-soft);border-color:#f3dca6;color:#9a6b12}
   .tablewrap{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:auto;max-height:64vh}
   table.data{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
-  table.data th,table.data td{padding:10px 13px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;max-width:360px;overflow:hidden;text-overflow:ellipsis}
-  table.data th{position:sticky;top:0;background:#f7f9fb;font-weight:700;color:#46535f;cursor:pointer;user-select:none;font-size:12px;text-transform:uppercase;letter-spacing:.03em;z-index:1}
-  table.data th:hover{background:#eef2f6}
+  table.data th,table.data td{padding:12px 18px;border-bottom:1px solid #eef1f5;text-align:left;white-space:nowrap;max-width:400px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+  table.data thead th{position:sticky;top:0;background:#fbfcfe;font-weight:700;color:#5b6772;cursor:pointer;user-select:none;font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #e3e8ef;z-index:1}
+  table.data thead th:hover{color:var(--brand-d)}
+  table.data tbody tr{transition:background .06s}
+  table.data tbody tr:hover{background:#f5faf7}
+  table.data tbody tr:last-child td{border-bottom:0}
+  table.data th:first-child,table.data td:first-child{padding-left:22px}
+  table.data th:last-child,table.data td:last-child{padding-right:22px}
+  table.data td:first-child{color:var(--muted);font-variant-numeric:tabular-nums}
   table.data th.num,table.data td.num{text-align:right;font-variant-numeric:tabular-nums}
-  table.data tbody tr:nth-child(even){background:#fbfcfe}
-  table.data tbody tr:hover{background:var(--brand-soft)}
-  td .money{font-variant-numeric:tabular-nums;font-weight:600}
+  td .money{font-variant-numeric:tabular-nums;font-weight:650}
   .badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11.5px;font-weight:650;line-height:1.5}
   .badge.g{background:var(--brand-soft);color:var(--brand-d)} .badge.b{background:var(--blue-soft);color:#1b4fd1}
   .badge.a{background:var(--amber-soft);color:#9a6b12} .badge.r{background:var(--red-soft);color:#bb3b52}
@@ -105,6 +109,25 @@
   .state{display:grid;place-items:center;padding:64px 0;color:var(--faint);text-align:center}
   .spin{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:sp .8s linear infinite;margin-bottom:12px}
   @keyframes sp{to{transform:rotate(360deg)}}
+  /* docs */
+  .doc-wrap{max-width:940px;margin:0 auto}
+  .doc-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow);margin-bottom:16px}
+  .doc-card h2{font-size:15px;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+  .doc-card>p{color:var(--muted);line-height:1.6;margin:6px 0 12px;font-size:13.5px}
+  .kv{display:flex;gap:12px;align-items:center;font-size:13px;padding:9px 0;border-bottom:1px dashed var(--line)}
+  .kv:last-child{border-bottom:0}
+  .kv .k{color:var(--muted);width:120px;flex:none;font-weight:650}
+  .kv code,code.inline{background:#eef2f7;padding:2px 8px;border-radius:6px;font-size:12.5px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .copybtn{margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:7px;padding:4px 9px;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--muted)}
+  .copybtn:hover{background:#f3f6f9;color:var(--ink)}
+  pre.code{position:relative;background:#0e1726;color:#e7eef6;border-radius:11px;padding:15px 16px;overflow:auto;font-size:12.5px;line-height:1.6;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:4px 0}
+  pre.code .cp{position:absolute;top:8px;right:8px;background:#1d2a3d;border:0;color:#9fb4cc;border-radius:7px;padding:4px 9px;font-size:11px;cursor:pointer}
+  pre.code .cp:hover{background:#26384f;color:#fff}
+  table.api{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+  table.api th,table.api td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+  table.api th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  table.api code{background:#eef2f7;padding:1px 6px;border-radius:5px;font-size:12px;font-family:ui-monospace,monospace}
+  .dc-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   /* toast */
   #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#16202c;color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.25s;z-index:99;display:flex;gap:8px;align-items:center}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -119,6 +142,7 @@
   <nav class="tabs" id="tabs">
     <button data-tab="overview" class="active">Overview</button>
     <button data-tab="explore">Explore</button>
+    <button data-tab="docs">Documentation</button>
   </nav>
   <div class="spacer"></div>
   <div class="who" id="who"></div>
@@ -173,6 +197,9 @@
       <div class="tablewrap"><div id="exBody"></div></div>
       <div class="pager" id="exPager"></div>
     </section>
+
+    <!-- DOCUMENTATION -->
+    <section id="docs" class="hidden doc-wrap"></section>
   </div>
 </main>
 
@@ -327,11 +354,88 @@ function doExport(kind){
   document.getElementById("expPop").classList.add("hidden");
 }
 
+/* ---------- Documentation ---------- */
+const CLIENT_ID="32168089642-fkk3rglncf6hl5ikq7pi6jbornug1kbb.apps.googleusercontent.com";
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const codeBlock=txt=>`<pre class="code"><button class="cp">Copy</button>${esc(txt)}</pre>`;
+const QS=`const API = "${API}";
+// idToken = the Google ID token from "Sign in with Google" (@ziptozipmoving.com)
+const res = await fetch(API + "/api/moveboard?since=2025-01-01&since_col=Create Date&limit=5000", {
+  headers: { Authorization: "Bearer " + idToken }
+});
+const data = await res.json();   // { table, count, truncated, rows: [...] }`;
+function docsStatic(){
+  return `
+  <div class="doc-card">
+    <h2>Zip to Zip — Data Bridge API</h2>
+    <p>This portal reads live data from a read-only HTTP API ("the bridge"). This page documents it for developers and AI assistants building dashboards or tools on top of the data. Everything is <b>read-only</b>; data refreshes automatically (~every 6 hours).</p>
+  </div>
+  <div class="doc-card">
+    <h2>Connection</h2>
+    <div class="kv"><span class="k">Bridge URL</span><code>${API}</code><button class="copybtn" data-copy="${API}">Copy</button></div>
+    <div class="kv"><span class="k">Google Client ID</span><code>${CLIENT_ID}</code><button class="copybtn" data-copy="${CLIENT_ID}">Copy</button></div>
+    <div class="kv"><span class="k">Auth</span><span>Google sign-in restricted to <code class="inline">@ziptozipmoving.com</code>. Send the ID token as <code class="inline">Authorization: Bearer &lt;token&gt;</code> on every request (except <code class="inline">/api/health</code>).</span></div>
+    <div class="kv"><span class="k">Origin</span><span>The page must be served from an allow-listed origin (<code class="inline">marymd84.github.io</code>, <code class="inline">tornikez2z.github.io</code>). Need another? Ask the data owner.</span></div>
+    <div class="kv"><span class="k">Access</span><span>Read-only (SELECT). No writes are possible.</span></div>
+  </div>
+  <div class="doc-card">
+    <h2>Endpoints</h2>
+    <table class="api">
+      <tr><th>Method &amp; path</th><th>Returns</th></tr>
+      <tr><td><code>GET /api/health</code></td><td>{ "ok": true } — open, no auth</td></tr>
+      <tr><td><code>GET /api/_tables</code></td><td>{ "tables": [...] } — live dataset names</td></tr>
+      <tr><td><code>GET /api/_stats</code></td><td>per-dataset metadata: rows, columns, last update, date coverage, by-file, by-month</td></tr>
+      <tr><td><code>GET /api/&lt;dataset&gt;</code></td><td>{ "table", "count", "truncated", "rows": [...] } — rows keyed by exact column name</td></tr>
+    </table>
+  </div>
+  <div class="doc-card">
+    <h2>Query parameters (for <code class="inline">/api/&lt;dataset&gt;</code>)</h2>
+    <table class="api">
+      <tr><th>Param</th><th>Meaning</th></tr>
+      <tr><td><code>limit</code></td><td>Max rows (ceiling ~1,000,000). <code>truncated:true</code> in the response means you hit the cap.</td></tr>
+      <tr><td><code>since</code> + <code>since_col</code></td><td>Server-side date filter. Example: <code>?since=2025-01-01&amp;since_col=Create Date</code></td></tr>
+      <tr><td><code>cols</code></td><td>Return only these columns (validated). Example: <code>?cols=#,Status,Closing Total,Create Date</code></td></tr>
+    </table>
+    <p style="margin-top:12px">Responses are streamed and gzip-compressed, so full tables of any size are fine. Pull only what you need with <code class="inline">since</code>/<code class="inline">cols</code>, and render large results with a virtualized/paginated grid.</p>
+  </div>
+  <div class="doc-card">
+    <h2>Quick start</h2>
+    ${codeBlock(QS)}
+  </div>
+  <div class="doc-card">
+    <h2>Notes &amp; conventions</h2>
+    <p>• Column names are the exact source headers (with spaces/symbols, e.g. <code class="inline">"Date / Time"</code>, <code class="inline">"#"</code>). • Every table also has 4 lineage columns: <code class="inline">File Name</code>, <code class="inline">Company</code>, <code class="inline">Update Date</code>, <code class="inline">File Path</code>. • Dates come back as strings (<code class="inline">"2025-06-03 17:42:00"</code>); blanks are <code class="inline">null</code>. • Data is customer PII — only signed-in company users see it; don't export it elsewhere. • If your project currently uses any of these datasets from Excel/Sheets, switch its data source to this bridge so it stays live.</p>
+  </div>
+  <div class="section-title" style="margin-top:8px">Datasets (live)</div>
+  <div id="docsDatasets"><div class="state"><div class="spin"></div>Loading dataset schemas…</div></div>`;
+}
+let docsLoaded=false; const docsCols={};
+async function renderDocs(){
+  const el=document.getElementById("docs");
+  if(docsLoaded){return;}
+  el.innerHTML=docsStatic();
+  wireCopy(el);
+  await Promise.all(STATS.tables.map(async t=>{
+    try{const d=await api(`/api/${encodeURIComponent(t.table)}?limit=1`);docsCols[t.table]=d.rows.length?Object.keys(d.rows[0]):[];}
+    catch(e){docsCols[t.table]=null;}
+  }));
+  document.getElementById("docsDatasets").innerHTML=STATS.tables.map(t=>{
+    const cols=docsCols[t.table];
+    const chips=cols?cols.map(c=>`<span class="chip">${esc(c)}</span>`).join(""):'<span class="muted small">sign in to load columns</span>';
+    return `<div class="doc-card"><div class="dc-head"><code class="inline" style="font-size:13px">${t.table}</code> <span class="muted">${pretty(t.table)}</span><span style="flex:1"></span><span class="muted small">${fmtN(t.rows)} rows · date: ${t.date_col||"—"} · ${dOnly(t.date_min)}→${dOnly(t.date_max)}</span></div><div class="chips" style="margin-top:11px">${chips}</div></div>`;
+  }).join("");
+  docsLoaded=true;
+}
+function wireCopy(scope){
+  scope.querySelectorAll(".copybtn").forEach(b=>b.onclick=()=>{navigator.clipboard.writeText(b.dataset.copy);toast("Copied");});
+  scope.querySelectorAll("pre.code .cp").forEach(b=>b.onclick=()=>{const p=b.closest("pre").cloneNode(true);p.querySelector(".cp").remove();navigator.clipboard.writeText(p.textContent);toast("Code copied");});
+}
+
 /* ---------- chrome / events ---------- */
 function switchTab(name){
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));
-  document.getElementById("overview").classList.toggle("hidden",name!=="overview");
-  document.getElementById("explore").classList.toggle("hidden",name!=="explore");
+  ["overview","explore","docs"].forEach(s=>document.getElementById(s).classList.toggle("hidden",s!==name));
+  if(name==="docs")renderDocs();
 }
 document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
 document.getElementById("refreshBtn").onclick=()=>{document.getElementById("refreshBtn").style.opacity=.5;loadStats().finally(()=>document.getElementById("refreshBtn").style.opacity=1);toast("Refreshed");};
