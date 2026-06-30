@@ -369,6 +369,7 @@ function docsStatic(){
   <div class="doc-card">
     <h2>Zip to Zip — Data Bridge API</h2>
     <p>This portal reads live data from a read-only HTTP API ("the bridge"). This page documents it for developers and AI assistants building dashboards or tools on top of the data. Everything is <b>read-only</b>; data refreshes automatically (~every 6 hours).</p>
+    <div class="kv" style="background:var(--brand-soft);border:1px solid #c7ecd6;border-radius:9px;padding:10px 12px;border-bottom:1px solid #c7ecd6"><span class="k" style="color:var(--brand-d)">🤖 For AI assistants</span><span>Give your Claude this <b>public, no-login</b> reference URL — it contains this whole spec: <code class="inline">${location.origin}${location.pathname.replace(/index\.html$/,'')}llms.txt</code></span><button class="copybtn" data-copy="${location.origin}${location.pathname.replace(/index\.html$/,'')}llms.txt">Copy</button></div>
   </div>
   <div class="doc-card">
     <h2>Connection</h2>
