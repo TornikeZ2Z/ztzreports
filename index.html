@@ -4,11 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zip to Zip — Data Portal</title>
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
 <script src="https://accounts.google.com/gsi/client" async></script>
 <style>
   :root{
     --bg:#f4f6f9; --panel:#fff; --ink:#16202c; --muted:#69757f; --faint:#9aa6b1; --line:#e7ebf1;
-    --brand:#0aa05a; --brand-d:#08824a; --brand-soft:#e8f7ef;
+    --brand:#9ABA3C; --brand-d:#5f7c20; --brand-soft:#eef5dc; --brand-press:#8aa634;
     --blue:#2f6df6; --blue-soft:#e8f0fe; --amber:#e8a93b; --amber-soft:#fdf3e0; --red:#e0556b; --red-soft:#fcebee;
     --teal:#0fb5ae; --shadow:0 1px 2px rgba(16,32,48,.05),0 8px 24px rgba(16,32,48,.06);
     --radius:13px;
@@ -29,8 +31,10 @@
   .who .av{width:24px;height:24px;border-radius:50%;background:var(--brand-soft);color:var(--brand-d);display:grid;place-items:center;font-weight:700;font-size:12px}
   .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:0 13px;height:38px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
   .btn:hover{background:#f5f7fa;border-color:#d8dee6}
-  .btn.brand{background:var(--brand);border-color:var(--brand);color:#fff}
-  .btn.brand:hover{background:var(--brand-d)}
+  .btn.brand{background:var(--brand);border-color:var(--brand);color:#23300f;font-weight:700}
+  .btn.brand:hover{background:var(--brand-press);border-color:var(--brand-press)}
+  .brandlogo{height:30px;border-radius:6px;display:block}
+  .brandsub{color:var(--muted);font-weight:600;font-size:14px;border-left:1px solid var(--line);padding-left:12px;margin-left:4px}
   .btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
   .btn svg{width:15px;height:15px}
   main{max-width:1280px;margin:0 auto;padding:24px}
@@ -138,7 +142,7 @@
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="logo">Z</span> Zip to Zip · Data Portal</div>
+  <div class="brand"><img class="brandlogo" src="logo-wide.png" alt="Zip to Zip Moving"><span class="brandsub">Data Portal</span></div>
   <nav class="tabs" id="tabs">
     <button data-tab="overview" class="active">Overview</button>
     <button data-tab="explore">Explore</button>
@@ -153,7 +157,7 @@
 <main>
   <section id="gate" class="gate">
     <div class="card">
-      <div class="logo" style="width:48px;height:48px;font-size:22px;margin:0 auto 16px">Z</div>
+      <img src="logo.png" alt="Zip to Zip Moving" style="width:92px;height:92px;border-radius:20px;display:block;margin:0 auto 18px;box-shadow:var(--shadow)">
       <h1>Sign in to the Data Portal</h1>
       <p>Use your <b>@ziptozipmoving.com</b> Google account.<br>The data is read-only and refreshed automatically.</p>
       <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-shape="pill"></div>
