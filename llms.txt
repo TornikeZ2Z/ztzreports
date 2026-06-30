@@ -1,0 +1,124 @@
+# Zip to Zip — Data Bridge: reference for AI assistants
+
+You are reading the canonical, machine-readable documentation for the Zip to Zip
+data bridge. If you are an AI assistant helping build dashboards/tools for Zip to
+Zip, everything you need is here.
+
+## THE RULE (do this first)
+If the project you are working on uses ANY of the datasets listed in "Datasets"
+below — in any form (uploaded Excel/CSV, a Google Sheet, pasted data, a hardcoded
+array, an older connection) — replace that data source with this live bridge.
+Keep the rest of the app (charts, layout, logic) the same; only swap the
+data-loading layer so the app reads current data automatically. If it uses none
+of these datasets, ignore this document.
+
+## What the bridge is
+A read-only HTTP API in front of the Zip to Zip "exports" database. The data
+refreshes automatically (~every 6 hours). A web page fetches JSON from it; access
+is gated by company Google sign-in. The page never holds DB credentials. There is
+no way to write through the bridge.
+
+## Connection
+- Bridge base URL: https://ztz-bridge-32168089642.us-east4.run.app
+- Google OAuth Web client ID: 32168089642-fkk3rglncf6hl5ikq7pi6jbornug1kbb.apps.googleusercontent.com
+- Auth: "Sign in with Google" restricted to @ziptozipmoving.com accounts. Send the
+  Google ID token on every request as:  Authorization: Bearer <id_token>
+  (only /api/health is open and needs no token).
+- Allowed origins (the page must be served from one of these or sign-in is blocked):
+  https://marymd84.github.io , https://tornikez2z.github.io
+  (need another origin added? ask the data owner — Tornike.)
+- Access is READ-ONLY.
+
+## Endpoints
+- GET /api/health              -> {"ok": true}  (open, no auth)
+- GET /api/_tables             -> {"tables": [...]}  live dataset names
+- GET /api/_stats              -> per-dataset metadata: rows, columns, last update,
+                                  date coverage, by_file, by_month
+- GET /api/<dataset>           -> {"table","count","truncated","rows":[ {..}, .. ]}
+                                  rows are objects keyed by the EXACT column name
+
+## Query parameters (for /api/<dataset>)
+- limit=<n>            max rows (ceiling ~1,000,000). "truncated": true means you hit the cap.
+- since=YYYY-MM-DD     server-side date filter lower bound (use with since_col)
+- since_col=<column>   the date column to filter on, e.g.
+                       /api/moveboard?since=2025-01-01&since_col=Create Date
+- cols=Col A,Col B     return only these columns (validated). Big speed/size win for
+                       wide tables, e.g. /api/moveboard?cols=#,Status,Closing Total,Create Date
+
+Responses are streamed and gzip-compressed, so full tables of any size are fine.
+Pull only what you need with since/cols; render large results with a
+virtualized/paginated grid so the browser stays responsive.
+
+## Quick start (browser JavaScript)
+    const API = "https://ztz-bridge-32168089642.us-east4.run.app";
+    // idToken = the Google ID token from "Sign in with Google" (@ziptozipmoving.com)
+    const res = await fetch(API + "/api/moveboard?since=2025-01-01&since_col=Create Date&limit=5000", {
+      headers: { Authorization: "Bearer " + idToken }
+    });
+    const data = await res.json();   // { table, count, truncated, rows: [...] }
+    // data.rows = [ { "#":..., "Status":..., "Closing Total":..., "Create Date":... }, ... ]
+
+For "Sign in with Google", load https://accounts.google.com/gsi/client and use the
+client ID above; the callback receives an ID token in response.credential.
+
+## Conventions
+- Column names are the exact source headers, including spaces/symbols
+  (e.g. "Date / Time", "C.F./ Lbs", "#"). Reference them verbatim.
+- Every table also has 4 lineage columns: File Name, Company, Update Date, File Path.
+  Use "Update Date" for freshness, "File Name" to scope to a source/year.
+- Dates are returned as strings like "2025-06-03 17:42:00". Numbers/decimals are
+  JSON numbers or numeric strings. Blank/missing values are null.
+- The data is customer PII (names, phones, emails). Only signed-in company users
+  see it. Do not export or send it elsewhere.
+
+## Datasets (snapshot — call /api/_tables and /api/_stats for the live list)
+
+### angi_leads — Angi leads
+Lead Number, Lead Date, Lead Status, Lead Description, Lead Type,
+Customer First Name, Customer Last Name, Customer Address, City, State, Zip Code,
+Phone, Email
+
+### thumbtack_leads — Thumbtack leads
+Customer Name, Date of Contact, Business Name, Category, Zip Code, State,
+Job Status, Response Time (minutes), Net Cost, Lead Cost, Sales Tax, Refunded,
+Charge State, Phone Number
+
+### ringcentral_calls — phone call logs (large, ~336k rows)
+Type, Direction, From, To, Extension, Forwarded To, Name, Date, Time, Action,
+Action Result, Result Description, Duration, Included, Purchased
+
+### ringcentral_sms — SMS logs
+Direction, Type, Message Type, Sender Number, Sender Name, Recipient Number,
+Recipient Name, Date / Time, Segment Count, Message Status, Detailed Error Code,
+Api Type, Cost, Included and Bundle, Pay as You Go
+
+### callrail_calls — tracked calls
+Call Status, Company Name, Company ID, Number Name, Tracking Number, Start Time,
+Duration (seconds), Name, Phone Number, Email, First-Time Caller, Keywords, Tags,
+Recording Url, Note
+
+### moveboard — jobs, quotes, invoices, payments (widest table)
+#, Status, Flag, Lead Score, Booked Date, Service Type, Packing, Move Date,
+In-home estimate date, In-home estimator, Video estimate date, Video estimator,
+Customer, Phone, Email, Moving From, Moving To, Street From, Apartment From,
+Street To, Apartment To, Extra pickup, Extra drop off, Extra pickup from,
+Apartment extra pickup, Extra drop off 2, Apartment extra pickup 2, Size of Move,
+Crew, Create Date, Updated Date, Source, C.F./ Lbs, Price per hour, Flat rate,
+Price per C.F., Start time window, Minimum move time, Maximum move time,
+Travel time, Double drive time, Trucks count, Est. Quote, Closing Total, Assigned,
+Invoice id, Invoice date, Invoice description, Invoice status, Invoice total,
+Transaction id, Payment id, Payment, Payment type, Payment date, Payment total,
+Sales notes, Foreman notes, Client notes, Dispatch notes, Pickup Truck names,
+Delivery Truck names, Tips, Sales Packing total, Closing Packing total,
+Additional services total, Valuation charge, Origin Address, Destination Address,
+Extra Pickup Address, Extra Drop Off Address
+
+### hatch — campaign / opt-out data
+Organization Name, Board Name, Campaign Name, Contact Name, Launched At: Minute,
+Campaign Current Status, Current Opp Source, Opted Out At: Minute,
+Opted Out Recipient, Phone
+
+## Notes
+- New tables added to the database appear automatically in /api/_tables, /api/_stats,
+  and /api/<dataset> with no code change.
+- Human-facing portal (Overview / Explore / Documentation) lives at the site root.
