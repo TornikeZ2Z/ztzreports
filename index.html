@@ -174,7 +174,7 @@
       <div id="refreshBar" class="refreshbar"></div>
       <div class="kpis" id="kpis"></div>
       <div class="section-title">Datasets — health &amp; freshness</div>
-      <div class="grid" id="cards"></div>
+      <div id="cards"></div>
     </section>
 
     <!-- EXPLORE -->
@@ -220,7 +220,19 @@ let TOKEN=null,STATS=null;
 const LABELS={angi_leads:"Angi Leads",thumbtack_leads:"Thumbtack Leads",ringcentral_calls:"RingCentral Calls",
   ringcentral_sms:"RingCentral SMS",callrail_calls:"CallRail Calls",moveboard:"Moveboard (Jobs)",hatch:"Hatch"};
 const pretty=t=>LABELS[t]||t.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
+const dispName=t=>t.label||pretty(t.table);   // t is a STATS entry
 const fmtN=n=>Number(n).toLocaleString();
+/* group STATS entries into ordered folders by their catalog category */
+function groupByFolder(tables){
+  const f={};
+  tables.forEach(t=>{const k=t.category||"Other";
+    (f[k]=f[k]||{name:k,order:t.cat_order??999,items:[]}).items.push(t);
+    f[k].order=Math.min(f[k].order,t.cat_order??999);});
+  const arr=Object.values(f);
+  arr.forEach(x=>x.items.sort((a,b)=>((a.ds_order??999)-(b.ds_order??999))||a.table.localeCompare(b.table)));
+  arr.sort((a,b)=>(a.order-b.order)||a.name.localeCompare(b.name));
+  return arr;
+}
 function ago(s){if(!s)return"—";const d=new Date(s.replace(" ","T")+"Z");const m=(Date.now()-d)/6e4;
   if(m<60)return Math.max(1,Math.round(m))+"m ago";const h=m/60;if(h<24)return Math.round(h)+"h ago";
   const dd=h/24;if(dd<30)return Math.round(dd)+"d ago";return Math.round(dd/30)+"mo ago";}
@@ -265,17 +277,21 @@ function renderOverview(){
     kpi("Datasets",T.length,"live tables")+
     kpi("Source files",files,"loaded exports")+
     kpi("Last updated",ago(lastUpd),lastUpd?("on "+dOnly(lastUpd)):"");
-  document.getElementById("cards").innerHTML=T.map(t=>{
+  const card=t=>{
     const chips=(t.by_file||[]).slice(0,8).map(f=>`<span class="chip">${f.file}: ${fmtN(f.rows)}</span>`).join("");
     return `<div class="tcard" data-table="${t.table}">
-      <h3><span class="dot ${statusDot(t.last_update)}"></span>${pretty(t.table)}<span class="openhint">Explore →</span></h3>
+      <h3><span class="dot ${statusDot(t.last_update)}"></span>${dispName(t)}<span class="openhint">Explore →</span></h3>
       <div class="rows">${fmtN(t.rows)}</div>
       <div class="meta">
         <div>Updated <b>${ago(t.last_update)}</b> <span class="muted">(${dOnly(t.last_update)})</span></div>
         <div>Coverage <b>${dOnly(t.date_min)}</b> → <b>${dOnly(t.date_max)}</b></div>
         <div><b>${t.columns}</b> columns · <b>${(t.by_file||[]).length}</b> source file(s)</div>
       </div><div class="chips">${chips}</div></div>`;
-  }).join("");
+  };
+  document.getElementById("cards").innerHTML=groupByFolder(T).map(f=>
+    `<div class="section-title">${f.name} <span class="muted" style="font-weight:600">· ${f.items.length}</span></div>`+
+    `<div class="grid" style="margin-bottom:22px">${f.items.map(card).join("")}</div>`
+  ).join("");
   document.querySelectorAll(".tcard").forEach(c=>c.onclick=()=>{document.getElementById("exTable").value=c.dataset.table;switchTab("explore");onTableChange();loadTable();});
   renderRefreshBar();
 }
@@ -312,7 +328,9 @@ function pollAfterRefresh(){
   },30000);
 }
 function fillSelectors(){
-  document.getElementById("exTable").innerHTML=STATS.tables.map(t=>`<option value="${t.table}">${pretty(t.table)}</option>`).join("");
+  document.getElementById("exTable").innerHTML=groupByFolder(STATS.tables).map(f=>
+    `<optgroup label="${f.name}">`+f.items.map(t=>`<option value="${t.table}">${dispName(t)}</option>`).join("")+`</optgroup>`
+  ).join("");
   onTableChange();
 }
 
