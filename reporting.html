@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zip to Zip — Reporting System</title>
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+<link rel="stylesheet" href="assets/portal.css">
+</head>
+<body>
+<header class="top" id="ztzHeader"></header>
+
+<main>
+  <section id="gate" class="gate hidden">
+    <div class="card">
+      <img src="logo.png" alt="Zip to Zip Moving" style="width:92px;height:92px;border-radius:20px;display:block;margin:0 auto 18px;box-shadow:var(--shadow)">
+      <h1>Reporting System</h1>
+      <p>Sign in with your <b>@ziptozipmoving.com</b> Google account to open the dashboards.</p>
+      <div class="signin-slot" id="gateSign"></div>
+      <div class="err" id="gateErr" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <section id="app" class="hidden">
+    <div class="hub-head">
+      <h1>Reporting System</h1>
+      <p>The General Analysis dashboards, rebuilt from Power BI on the curated warehouse — same measures, same filters, live data. Pages go live one by one as they are verified against the original report.</p>
+    </div>
+    <div id="groups"></div>
+  </section>
+</main>
+
+<footer><span>🔒 Read-only · secured by company Google sign-in</span><span class="spacer"></span><span>General Analysis Report · 16 pages</span></footer>
+
+<script src="assets/portal.js"></script>
+<script>
+/* Registry of the 16 General Overview pages. `href` + live:true once a page is built & verified. */
+const DASHBOARDS = [
+  { group: "📈 Overview & Growth", items: [
+    { t: "Jobs Done vs Hours Worked", d: "Foreman output vs hours worked — KPIs, switchable measures (Jobs / Bill / Net Cash / Card), graph & tabular views.", ico: "👷", href: "general-analysis.html", live: true },
+    { t: "YoY Diff", d: "Year-over-year growth across the core measures.", ico: "📆" },
+    { t: "Analysis by Category", d: "Core measures broken down by business category.", ico: "🧭" },
+  ]},
+  { group: "💼 Sales & Leads", items: [
+    { t: "Sales Person Analysis", d: "Sales performance — bookings, revenue and conversion by sales person.", ico: "🧑‍💼" },
+    { t: "Leads Analysis", d: "Lead volume, sources and outcomes across providers.", ico: "🧲" },
+    { t: "Leads by State", d: "Geographic lead distribution and performance by state.", ico: "🗺️" },
+    { t: "Ads Analysis", d: "Advertising performance and lead generation by channel.", ico: "📣" },
+    { t: "CallRail", d: "Call tracking — volumes, sources and outcomes from CallRail.", ico: "☎️" },
+  ]},
+  { group: "🚚 Operations", items: [
+    { t: "Forman", d: "Foreman scorecard — jobs, hours, revenue and scores.", ico: "🛠️" },
+    { t: "Forman Analysis", d: "Deeper foreman comparisons across measures and time.", ico: "📐" },
+    { t: "Packing", d: "Packing revenue and materials performance.", ico: "📦" },
+    { t: "Packing Analysis", d: "Packing sold vs estimate — detailed breakdowns.", ico: "🧾" },
+    { t: "Packing per 100 CF", d: "Packing efficiency normalized per 100 cubic feet.", ico: "📏" },
+    { t: "Claims", d: "Damage claims — volume, cost and resolution.", ico: "🛡️" },
+  ]},
+  { group: "⭐ Customers & Storage", items: [
+    { t: "Reviews", d: "Customer reviews — ratings, sources and trends.", ico: "⭐" },
+    { t: "Storage", d: "Storage business — units, revenue and occupancy.", ico: "🏬" },
+  ]},
+];
+
+ZTZ.header("reporting", "Reporting System");
+if (!ZTZ.getToken()) {
+  document.getElementById("gate").classList.remove("hidden");
+  ZTZ.mountSignin(document.getElementById("gateSign"))
+    .catch(e => document.getElementById("gateErr").textContent = e.message);
+} else {
+  document.getElementById("app").classList.remove("hidden");
+  document.getElementById("groups").innerHTML = DASHBOARDS.map(g => {
+    const cards = g.items.map(x => x.live
+      ? `<a class="dcard" href="${x.href}"><span class="badge live">LIVE</span><h3><span class="ico">${x.ico}</span>${x.t}</h3><p>${x.d}</p><span class="open">Open dashboard →</span></a>`
+      : `<div class="dcard soon"><span class="badge soon">IN BUILD</span><h3><span class="ico">${x.ico}</span>${x.t}</h3><p>${x.d}</p></div>`
+    ).join("");
+    return `<div class="cat-title">${g.group}</div><div class="dashgrid">${cards}</div>`;
+  }).join("");
+}
+</script>
+</body>
+</html>
