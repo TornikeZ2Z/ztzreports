@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zip to Zip — General Analysis Report</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{--brand:#9ABA3C;--brand-d:#5f7c20;--brand-soft:#eef5dc;--ink:#16202c;--muted:#5b6772;
+    --faint:#93a0ac;--line:#e5eaf0;--radius:14px;--shadow:0 1px 3px rgba(16,32,48,.06);--amber:#e0a52a;--blue:#3f62d8}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,-apple-system,"Segoe UI",Roboto,sans-serif;background:#f4f6f9;color:var(--ink);font-size:14px}
+  a{color:inherit}
+  .top{display:flex;align-items:center;gap:14px;background:#fff;border-bottom:1px solid var(--line);padding:12px 24px;position:sticky;top:0;z-index:20}
+  .brandlogo{height:30px}
+  .brandsub{font-weight:750;font-size:15px;letter-spacing:-.2px}
+  .top .sep{width:1px;height:26px;background:var(--line)}
+  .backlink{color:var(--muted);font-weight:600;text-decoration:none;font-size:13.5px}
+  .backlink:hover{color:var(--brand-d)}
+  .who{margin-left:auto;color:var(--muted);font-size:13px;display:flex;align-items:center;gap:8px}
+  .av{width:26px;height:26px;border-radius:50%;background:var(--brand);color:#23300f;display:grid;place-items:center;font-weight:750;font-size:12px}
+  main{max-width:1320px;margin:0 auto;padding:22px 24px 60px}
+  h1{font-size:20px;font-weight:790;letter-spacing:-.4px;margin:2px 0 3px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+  .gate{min-height:70vh;display:grid;place-items:center;text-align:center}
+  .gate .card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:40px 44px;max-width:440px}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;gap:7px}
+  .btn:hover{background:#f3f6f9}
+  .btn.brand{background:var(--brand);border-color:var(--brand);color:#23300f}
+  .btn.brand:hover{filter:brightness(.97)}
+  .btn.on{background:var(--brand-soft);border-color:#cfe0a0;color:var(--brand-d)}
+  /* filter bar */
+  .filters{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 14px;display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:16px}
+  .fld{display:flex;flex-direction:column;gap:3px}
+  .fld label{font-size:10px;font-weight:750;text-transform:uppercase;letter-spacing:.05em;color:var(--faint)}
+  .fld select{border:1px solid var(--line);border-radius:9px;height:34px;padding:0 9px;font-size:13px;background:#fff;color:var(--ink);outline:0;min-width:112px}
+  .fld select:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+  .spacer{flex:1}
+  /* kpis */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;box-shadow:var(--shadow)}
+  .kpi .l{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  .kpi .v{font-size:23px;font-weight:790;margin-top:5px;letter-spacing:-.5px}
+  .kpi .s{font-size:12px;color:var(--faint);margin-top:2px}
+  /* panel */
+  .panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:16px}
+  .panel-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .panel-title{font-size:15px;font-weight:740}
+  .panel-head .spacer{flex:1}
+  .chartbox{position:relative;height:430px}
+  table.tab{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px}
+  table.tab th,table.tab td{padding:8px 12px;border-bottom:1px solid #eef1f5;text-align:right;white-space:nowrap}
+  table.tab th:first-child,table.tab td:first-child{text-align:left;position:sticky;left:0;background:#fff}
+  table.tab thead th{position:sticky;top:0;background:#fbfcfe;font-weight:700;color:#5b6772;font-size:11px;text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid #e3e8ef}
+  table.tab tbody tr:hover{background:#f5faf7}
+  table.tab tfoot td{font-weight:750;border-top:2px solid #e3e8ef;background:#fbfcfe}
+  .tabwrap{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:10px}
+  .hidden{display:none!important}
+  .state{display:grid;place-items:center;padding:60px 0;color:var(--faint)}
+  .spin{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:sp .8s linear infinite;margin-bottom:12px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .err{color:#bb3b52;font-size:13px}
+  @media(max-width:860px){.kpis{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header class="top">
+  <img class="brandlogo" src="logo-wide.png" alt="Zip to Zip Moving">
+  <div class="sep"></div>
+  <a class="backlink" href="index.html">← Data Portal</a>
+  <div class="who" id="who"></div>
+</header>
+
+<main>
+  <section id="gate" class="gate hidden">
+    <div class="card">
+      <h1>Sign in required</h1>
+      <p class="sub">Open the <a href="index.html">Data Portal</a> and sign in with your <b>@ziptozipmoving.com</b> account first, then return here.</p>
+      <a class="btn brand" href="index.html">Go to Data Portal</a>
+      <div class="err" id="gateErr" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <section id="app" class="hidden">
+    <h1>General Analysis Report</h1>
+    <div class="sub">Jobs Done vs Hours Worked · rebuilt live from the curated warehouse (<span id="snap"></span>)</div>
+
+    <div class="filters" id="filters"></div>
+
+    <div class="kpis" id="kpis"></div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Jobs Done vs Hours Worked — by Foreman</span>
+        <div class="fld" style="margin-left:14px">
+          <label>Calculate by</label>
+          <select id="measure"></select>
+        </div>
+        <span class="spacer"></span>
+        <button class="btn on" id="btnGraph">▮ Graph</button>
+        <button class="btn" id="btnTable">▤ Tabular</button>
+      </div>
+      <div id="graphView"><div class="chartbox"><canvas id="chart"></canvas></div></div>
+      <div id="tableView" class="hidden"><div class="tabwrap"><div id="tabHost"></div></div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const API="https://ztz-bridge-32168089642.us-east4.run.app";
+let TOKEN=null, ROWS=[], chart=null;
+const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const num=v=>{const n=parseFloat(String(v==null?"":v).replace(/[,$\s]/g,""));return isNaN(n)?0:n;};
+const fmtN=n=>Math.round(n).toLocaleString();
+const money=n=>"$"+Math.round(n).toLocaleString();
+const MEASURES={
+  "Total Jobs":     {agg:r=>1,             fmt:fmtN,   sum:true},
+  "Total Bill":     {agg:r=>num(r["Total Bill"]),   fmt:money},
+  "Net Cash":       {agg:r=>num(r["Net Cash"]),     fmt:money},
+  "Card Payment":   {agg:r=>num(r["Card Payment"]), fmt:money},
+  "Net Cash + Card":{agg:r=>num(r["Net Cash"])+num(r["Card Payment"]), fmt:money}
+};
+function decodeJwt(t){try{return JSON.parse(atob(t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")));}catch(e){return {};}}
+function tokenValid(t){const p=decodeJwt(t);return !!(p.exp&&p.exp*1000>Date.now()+30000);}
+
+async function boot(){
+  try{TOKEN=localStorage.getItem("ztz_tok");}catch(e){}
+  if(!TOKEN||!tokenValid(TOKEN)){document.getElementById("gate").classList.remove("hidden");return;}
+  const email=(decodeJwt(TOKEN).email||"");
+  document.getElementById("who").innerHTML=email?`<span class="av">${email[0].toUpperCase()}</span>${email}`:"";
+  document.getElementById("app").classList.remove("hidden");
+  try{
+    const cols=["Foreman","Date","Company","Source","State","State Name","Total Bill","Net Cash","Card Payment","Foreman Hours"];
+    const r=await fetch(API+"/api/fct_closing?cols="+encodeURIComponent(cols.join(",")),
+      {headers:{Authorization:"Bearer "+TOKEN}});
+    if(r.status===401){document.getElementById("app").classList.add("hidden");document.getElementById("gate").classList.remove("hidden");return;}
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const j=await r.json();
+    ROWS=(j.rows||[]).map(row=>{
+      const d=String(row["Date"]||"").slice(0,10);
+      row._y=d.slice(0,4); row._m=parseInt(d.slice(5,7),10)||0; return row;
+    }).filter(x=>x.Foreman);
+    document.getElementById("snap").textContent=ROWS.length.toLocaleString()+" jobs loaded";
+    buildFilters(); buildMeasurePicker(); render();
+  }catch(e){document.getElementById("gate").classList.remove("hidden");document.getElementById("gateErr").textContent=e.message;}
+}
+
+const FILTERS=[
+  {key:"_y",   label:"Year"},
+  {key:"_m",   label:"Month", opts:()=>MONTHS.map((m,i)=>[String(i+1),m]), val:r=>r._m},
+  {key:"Company",label:"Company"},
+  {key:"Source", label:"Source"},
+  {key:"State",  label:"State"},
+  {key:"Foreman",label:"Foreman"}
+];
+function distinct(f){
+  const s=new Set(); ROWS.forEach(r=>{const v=f.val?f.val(r):r[f.key]; if(v!==""&&v!=null) s.add(String(v));});
+  return [...s];
+}
+function buildFilters(){
+  const host=document.getElementById("filters"); host.innerHTML="";
+  FILTERS.forEach(f=>{
+    let vals=distinct(f);
+    let opts;
+    if(f.opts){const order=f.opts();opts=order.filter(o=>vals.includes(o[0]));}
+    else{opts=vals.sort((a,b)=>f.key==="_y"?b.localeCompare(a):a.localeCompare(b)).map(v=>[v,v]);}
+    const sel=`<select data-k="${f.key}"><option value="">All</option>${opts.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join("")}</select>`;
+    const d=document.createElement("div"); d.className="fld";
+    d.innerHTML=`<label>${f.label}</label>${sel}`;
+    d.querySelector("select").onchange=render;
+    host.appendChild(d);
+  });
+  const sp=document.createElement("div"); sp.className="spacer"; host.appendChild(sp);
+  const clr=document.createElement("button"); clr.className="btn"; clr.textContent="✕ Clear filters";
+  clr.onclick=()=>{host.querySelectorAll("select").forEach(s=>s.value="");render();};
+  host.appendChild(clr);
+}
+function activeFilters(){
+  const out=[];
+  document.querySelectorAll("#filters select").forEach(s=>{if(s.value)out.push([s.dataset.k,s.value]);});
+  return out;
+}
+function filtered(){
+  const af=activeFilters(); if(!af.length)return ROWS;
+  return ROWS.filter(r=>af.every(([k,v])=>{
+    const f=FILTERS.find(x=>x.key===k); const rv=f&&f.val?f.val(r):r[k];
+    return String(rv)===v;
+  }));
+}
+function buildMeasurePicker(){
+  document.getElementById("measure").innerHTML=Object.keys(MEASURES).map(m=>`<option>${m}</option>`).join("");
+  document.getElementById("measure").onchange=render;
+  document.getElementById("btnGraph").onclick=()=>toggle(true);
+  document.getElementById("btnTable").onclick=()=>toggle(false);
+}
+function toggle(graph){
+  document.getElementById("graphView").classList.toggle("hidden",!graph);
+  document.getElementById("tableView").classList.toggle("hidden",graph);
+  document.getElementById("btnGraph").classList.toggle("on",graph);
+  document.getElementById("btnTable").classList.toggle("on",!graph);
+  render();
+}
+
+function render(){
+  const rows=filtered();
+  // KPIs
+  const jobs=rows.length;
+  const bill=rows.reduce((a,r)=>a+num(r["Total Bill"]),0);
+  const hours=rows.reduce((a,r)=>a+num(r["Foreman Hours"]),0);
+  const foremen=new Set(rows.map(r=>r.Foreman)).size;
+  document.getElementById("kpis").innerHTML=
+    kpi("Total Jobs",fmtN(jobs),"closed jobs")+
+    kpi("Total Bill",money(bill),"revenue")+
+    kpi("Hours Worked",fmtN(hours),"foreman hours")+
+    kpi("Jobs / 100 hrs",hours?(100*jobs/hours).toFixed(1):"—","efficiency");
+  // group by foreman
+  const mkey=document.getElementById("measure").value;
+  const M=MEASURES[mkey];
+  const g={};
+  rows.forEach(r=>{const f=r.Foreman;(g[f]=g[f]||{bar:0,hours:0,jobs:0});g[f].bar+=M.agg(r);g[f].hours+=num(r["Foreman Hours"]);g[f].jobs++;});
+  let list=Object.entries(g).map(([f,v])=>({f,...v})).sort((a,b)=>b.bar-a.bar).slice(0,20);
+  if(document.getElementById("graphView").classList.contains("hidden")) renderTable(rows);
+  else renderChart(list,mkey,M);
+}
+const kpi=(l,v,s)=>`<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+
+function renderChart(list,mkey,M){
+  const labels=list.map(x=>x.f);
+  const bars=list.map(x=>Math.round(x.bar));
+  const line=list.map(x=>Math.round(x.hours));
+  const data={labels,datasets:[
+    {type:"bar",label:mkey,data:bars,backgroundColor:"#9ABA3C",borderRadius:4,yAxisID:"y",order:2},
+    {type:"line",label:"Hours Worked",data:line,borderColor:"#3f62d8",backgroundColor:"#3f62d8",borderWidth:2,pointRadius:2,tension:.3,yAxisID:"y1",order:1}
+  ]};
+  const isMoney=M.fmt===money;
+  const opts={responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+    plugins:{legend:{position:"top",labels:{boxWidth:12,font:{size:12}}},
+      tooltip:{callbacks:{label:c=>c.dataset.yAxisID==="y"?`${mkey}: ${M.fmt(c.raw)}`:`Hours: ${fmtN(c.raw)}`}}},
+    scales:{
+      y:{position:"left",title:{display:true,text:mkey},ticks:{callback:v=>isMoney?"$"+(v/1000)+"k":fmtN(v)}},
+      y1:{position:"right",title:{display:true,text:"Hours Worked"},grid:{drawOnChartArea:false},ticks:{callback:v=>fmtN(v)}},
+      x:{ticks:{font:{size:11},maxRotation:60,minRotation:40}}
+    }};
+  if(chart)chart.destroy();
+  chart=new Chart(document.getElementById("chart"),{data,options:opts});
+}
+
+function renderTable(rows){
+  // Foreman × Month(Year-Month): Jobs, Bill, Net Cash, Card, Net+Card
+  const foremen={}, months=new Set();
+  rows.forEach(r=>{
+    const mk=r._y&&r._m?`${r._y}-${String(r._m).padStart(2,"0")}`:"—"; months.add(mk);
+    const f=r.Foreman; (foremen[f]=foremen[f]||{}); const c=(foremen[f][mk]=foremen[f][mk]||{j:0,b:0,n:0,cd:0});
+    c.j++; c.b+=num(r["Total Bill"]); c.n+=num(r["Net Cash"]); c.cd+=num(r["Card Payment"]);
+  });
+  // totals per foreman
+  const rowsOut=Object.entries(foremen).map(([f,mm])=>{
+    let j=0,b=0,n=0,cd=0; Object.values(mm).forEach(c=>{j+=c.j;b+=c.b;n+=c.n;cd+=c.cd;});
+    return {f,j,b,n,cd};
+  }).sort((a,b)=>b.j-a.j);
+  const T={j:0,b:0,n:0,cd:0}; rowsOut.forEach(r=>{T.j+=r.j;T.b+=r.b;T.n+=r.n;T.cd+=r.cd;});
+  const th=`<tr><th>Foreman</th><th>Jobs</th><th>Total Bill</th><th>Net Cash</th><th>Card Payment</th><th>Net + Card</th></tr>`;
+  const body=rowsOut.map(r=>`<tr><td>${r.f}</td><td>${fmtN(r.j)}</td><td>${money(r.b)}</td><td>${money(r.n)}</td><td>${money(r.cd)}</td><td>${money(r.n+r.cd)}</td></tr>`).join("");
+  const foot=`<tr><td>Total</td><td>${fmtN(T.j)}</td><td>${money(T.b)}</td><td>${money(T.n)}</td><td>${money(T.cd)}</td><td>${money(T.n+T.cd)}</td></tr>`;
+  document.getElementById("tabHost").innerHTML=`<table class="tab"><thead>${th}</thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table>`;
+}
+
+boot();
+</script>
+</body>
+</html>
