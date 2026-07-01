@@ -70,6 +70,24 @@
   .meta b{color:var(--ink);font-weight:650}
   .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px}
   .chip{background:#f2f5f9;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:11px;color:var(--muted)}
+  /* ---------- layer + folder grouping ---------- */
+  .layer-head{display:flex;align-items:center;gap:11px;margin:28px 0 14px;padding-bottom:9px;border-bottom:2px solid var(--line)}
+  .layer-head:first-child{margin-top:2px}
+  .layer-badge{font-size:11px;font-weight:800;letter-spacing:.07em;padding:4px 10px;border-radius:7px}
+  .layer-badge.raw{background:var(--brand-soft);color:var(--brand-d)}
+  .layer-badge.cur{background:#e9eefc;color:#2f52c9}
+  .layer-title{font-size:17px;font-weight:760;letter-spacing:-.2px}
+  .layer-sub{margin-left:auto;font-size:12.5px;color:var(--faint);font-weight:600}
+  .folder{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+  .folder-head{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;user-select:none;transition:background .08s}
+  .folder-head:hover{background:#f7faf6}
+  .folder-head .chev{width:15px;height:15px;color:var(--muted);transition:transform .15s;flex:none}
+  .folder[data-open="0"] .chev{transform:rotate(-90deg)}
+  .folder[data-open="0"] .folder-body{display:none}
+  .folder-name{font-size:14.5px;font-weight:700}
+  .folder-meta{margin-left:auto;font-size:12px;color:var(--faint);font-weight:600}
+  .folder-body{padding:2px 16px 16px}
+  .curated-empty{background:#fff;border:1px dashed #cfd8e3;border-radius:14px;padding:30px 26px;text-align:center;color:var(--faint);font-size:13.5px;line-height:1.6}
   /* ---------- explore ---------- */
   .toolbar{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
   .field{display:flex;align-items:center;gap:7px;height:38px;border:1px solid var(--line);border-radius:10px;padding:0 6px 0 11px;background:#fff}
@@ -233,6 +251,16 @@ function groupByFolder(tables){
   arr.sort((a,b)=>(a.order-b.order)||a.name.localeCompare(b.name));
   return arr;
 }
+const LAYER_META={RAW:{order:1,badge:"raw",title:"Raw Data"},CURATED:{order:2,badge:"cur",title:"Curated · Silver"},SILVER:{order:2,badge:"cur",title:"Curated · Silver"}};
+/* group STATS entries into layers (RAW / CURATED), each holding folders */
+function groupByLayer(tables){
+  const L={};
+  tables.forEach(t=>{const k=(t.layer||"RAW").toUpperCase();(L[k]=L[k]||{layer:k,items:[]}).items.push(t);});
+  const arr=Object.values(L).map(l=>({layer:l.layer,folders:groupByFolder(l.items),
+    count:l.items.length,rows:l.items.reduce((a,t)=>a+t.rows,0)}));
+  arr.sort((a,b)=>((LAYER_META[a.layer]?LAYER_META[a.layer].order:9)-(LAYER_META[b.layer]?LAYER_META[b.layer].order:9))||a.layer.localeCompare(b.layer));
+  return arr;
+}
 function ago(s){if(!s)return"—";const d=new Date(s.replace(" ","T")+"Z");const m=(Date.now()-d)/6e4;
   if(m<60)return Math.max(1,Math.round(m))+"m ago";const h=m/60;if(h<24)return Math.round(h)+"h ago";
   const dd=h/24;if(dd<30)return Math.round(dd)+"d ago";return Math.round(dd/30)+"mo ago";}
@@ -288,10 +316,29 @@ function renderOverview(){
         <div><b>${t.columns}</b> columns · <b>${(t.by_file||[]).length}</b> source file(s)</div>
       </div><div class="chips">${chips}</div></div>`;
   };
-  document.getElementById("cards").innerHTML=groupByFolder(T).map(f=>
-    `<div class="section-title">${f.name} <span class="muted" style="font-weight:600">· ${f.items.length}</span></div>`+
-    `<div class="grid" style="margin-bottom:22px">${f.items.map(card).join("")}</div>`
-  ).join("");
+  const folderPanel=f=>{
+    const rows=f.items.reduce((a,t)=>a+t.rows,0);
+    return `<div class="folder" data-open="1">
+      <div class="folder-head">
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m6 9 6 6 6-6"/></svg>
+        <span class="folder-name">${f.name}</span>
+        <span class="folder-meta">${f.items.length} dataset${f.items.length===1?'':'s'} · ${fmtN(rows)} rows</span>
+      </div>
+      <div class="folder-body"><div class="grid">${f.items.map(card).join("")}</div></div>
+    </div>`;
+  };
+  const layerHead=(lay,count,rows,sub)=>{const m=LAYER_META[lay]||{badge:"cur",title:lay};
+    return `<div class="layer-head"><span class="layer-badge ${m.badge}">${lay}</span>`+
+      `<span class="layer-title">${m.title}</span>`+
+      `<span class="layer-sub">${sub!=null?sub:(count+" dataset"+(count===1?'':'s')+" · "+fmtN(rows)+" rows")}</span></div>`;};
+  const layers=groupByLayer(T);
+  let html=layers.map(l=>layerHead(l.layer,l.count,l.rows)+l.folders.map(folderPanel).join("")).join("");
+  if(!layers.some(l=>l.layer!=="RAW")){
+    html+=layerHead("CURATED",0,0,"in progress")+
+      `<div class="curated-empty">🏗️ &nbsp;The curated <b>silver layer</b> is being built — modeled tables mirroring the reporting system (facts, dimensions, applied translators) will appear here.</div>`;
+  }
+  document.getElementById("cards").innerHTML=html;
+  document.querySelectorAll(".folder-head").forEach(h=>h.onclick=()=>{const f=h.parentNode;f.dataset.open=f.dataset.open==="1"?"0":"1";});
   document.querySelectorAll(".tcard").forEach(c=>c.onclick=()=>{document.getElementById("exTable").value=c.dataset.table;switchTab("explore");onTableChange();loadTable();});
   renderRefreshBar();
 }
