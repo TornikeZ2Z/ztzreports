@@ -72,8 +72,14 @@
   .chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
   .chip{background:#f2f5f9;border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:10px;color:var(--muted)}
   /* ---------- layer + folder grouping ---------- */
-  .layer-head{display:flex;align-items:center;gap:13px;margin:30px 0 15px;padding:12px 16px 12px 20px;border-radius:14px;position:relative;overflow:hidden}
-  .layer-head:first-child{margin-top:4px}
+  .layer-sec{margin:16px 0 0}
+  .layer-sec:first-child{margin-top:6px}
+  .layer-body{margin-top:13px}
+  .layer-sec[data-open="0"] .layer-body{display:none}
+  .layer-chev{width:17px;height:17px;color:var(--muted);transition:transform .15s;flex:none}
+  .layer-sec[data-open="0"] .layer-chev{transform:rotate(-90deg)}
+  .layer-head{display:flex;align-items:center;gap:12px;padding:13px 16px 13px 20px;border-radius:14px;position:relative;overflow:hidden;cursor:pointer;transition:filter .1s}
+  .layer-head:hover{filter:brightness(.985)}
   .layer-head.raw{background:linear-gradient(90deg,var(--brand-soft),#fbfdf6)}
   .layer-head.cur{background:linear-gradient(90deg,#eaf0fe,#fafbff)}
   .layer-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px}
@@ -348,18 +354,20 @@ function renderOverview(){
     </div>`;
   };
   const layerHead=(lay,count,rows,sub)=>{const m=LAYER_META[lay]||{badge:"cur",title:lay};
-    return `<div class="layer-head ${m.badge}"><span class="layer-badge ${m.badge}">${lay}</span>`+
+    return `<div class="layer-head ${m.badge}"><svg class="layer-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m6 9 6 6 6-6"/></svg><span class="layer-badge ${m.badge}">${lay}</span>`+
       `<div class="layer-titles"><div class="layer-title">${m.title}</div>`+
       `<div class="layer-desc">${LAYER_DESC[lay]||""}</div></div>`+
       `<span class="layer-sub">${sub!=null?sub:(count+" dataset"+(count===1?'':'s')+" · "+fmtN(rows)+" records")}</span></div>`;};
   const layers=groupByLayer(T);
-  let html=layers.map(l=>layerHead(l.layer,l.count,l.rows)+l.folders.map(folderPanel).join("")).join("");
+  const layerSec=(head,body)=>`<div class="layer-sec" data-open="0">${head}<div class="layer-body">${body}</div></div>`;
+  let html=layers.map(l=>layerSec(layerHead(l.layer,l.count,l.rows), l.folders.map(folderPanel).join(""))).join("");
   if(!layers.some(l=>l.layer!=="RAW")){
-    html+=layerHead("CURATED",0,0,"in progress")+
-      `<div class="curated-empty">🏗️ &nbsp;The curated <b>silver layer</b> is being built — modeled tables mirroring the reporting system (facts, dimensions, applied translators) will appear here.</div>`;
+    html+=layerSec(layerHead("CURATED",0,0,"in progress"),
+      `<div class="curated-empty">🏗️ &nbsp;The curated <b>silver layer</b> is being built — modeled tables mirroring the reporting system (facts, dimensions, applied translators) will appear here.</div>`);
   }
   document.getElementById("cards").innerHTML=html;
-  document.querySelectorAll(".folder-head").forEach(h=>h.onclick=()=>{const f=h.parentNode;f.dataset.open=f.dataset.open==="1"?"0":"1";});
+  document.querySelectorAll(".layer-head").forEach(h=>h.onclick=()=>{const s=h.closest(".layer-sec");s.dataset.open=s.dataset.open==="1"?"0":"1";});
+  document.querySelectorAll(".folder-head").forEach(h=>h.onclick=e=>{e.stopPropagation();const f=h.parentNode;f.dataset.open=f.dataset.open==="1"?"0":"1";});
   document.querySelectorAll(".tcard").forEach(c=>c.onclick=()=>{document.getElementById("exTable").value=c.dataset.table;switchTab("explore");onTableChange();loadTable();});
   renderRefreshBar();
 }
