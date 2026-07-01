@@ -26,6 +26,8 @@
   nav.tabs button{border:0;background:none;color:var(--muted);font-weight:600;padding:8px 14px;border-radius:9px;cursor:pointer;font-size:14px}
   nav.tabs button.active{background:var(--brand-soft);color:var(--brand-d)}
   nav.tabs button:hover:not(.active){background:#eef1f5;color:var(--ink)}
+  nav.tabs a.navlink{text-decoration:none;color:var(--muted);font-weight:600;padding:8px 14px;border-radius:9px;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+  nav.tabs a.navlink:hover{background:#eef1f5;color:var(--ink)}
   .spacer{flex:1}
   .who{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:7px}
   .who .av{width:24px;height:24px;border-radius:50%;background:var(--brand-soft);color:var(--brand-d);display:grid;place-items:center;font-weight:700;font-size:12px}
@@ -187,6 +189,7 @@
     <button data-tab="overview" class="active">Overview</button>
     <button data-tab="explore">Explore</button>
     <button data-tab="docs">Documentation</button>
+    <a href="general-analysis.html" class="navlink">📊 General Analysis Report</a>
   </nav>
   <div class="spacer"></div>
   <div class="who" id="who"></div>
