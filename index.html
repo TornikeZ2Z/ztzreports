@@ -71,22 +71,34 @@
   .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px}
   .chip{background:#f2f5f9;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:11px;color:var(--muted)}
   /* ---------- layer + folder grouping ---------- */
-  .layer-head{display:flex;align-items:center;gap:11px;margin:28px 0 14px;padding-bottom:9px;border-bottom:2px solid var(--line)}
-  .layer-head:first-child{margin-top:2px}
-  .layer-badge{font-size:11px;font-weight:800;letter-spacing:.07em;padding:4px 10px;border-radius:7px}
-  .layer-badge.raw{background:var(--brand-soft);color:var(--brand-d)}
-  .layer-badge.cur{background:#e9eefc;color:#2f52c9}
-  .layer-title{font-size:17px;font-weight:760;letter-spacing:-.2px}
-  .layer-sub{margin-left:auto;font-size:12.5px;color:var(--faint);font-weight:600}
-  .folder{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
-  .folder-head{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;user-select:none;transition:background .08s}
+  .layer-head{display:flex;align-items:center;gap:13px;margin:30px 0 15px;padding:12px 16px 12px 20px;border-radius:14px;position:relative;overflow:hidden}
+  .layer-head:first-child{margin-top:4px}
+  .layer-head.raw{background:linear-gradient(90deg,var(--brand-soft),#fbfdf6)}
+  .layer-head.cur{background:linear-gradient(90deg,#eaf0fe,#fafbff)}
+  .layer-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px}
+  .layer-head.raw::before{background:var(--brand)}
+  .layer-head.cur::before{background:#3f62d8}
+  .layer-badge{font-size:11px;font-weight:820;letter-spacing:.08em;padding:5px 11px;border-radius:8px;flex:none}
+  .layer-badge.raw{background:var(--brand);color:#23300f}
+  .layer-badge.cur{background:#3f62d8;color:#fff}
+  .layer-titles{display:flex;flex-direction:column;gap:1px}
+  .layer-title{font-size:16.5px;font-weight:780;letter-spacing:-.2px;line-height:1.2}
+  .layer-desc{font-size:12px;color:var(--muted);font-weight:500}
+  .layer-sub{margin-left:auto;font-size:12.5px;color:var(--muted);font-weight:650;white-space:nowrap}
+  .folder{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);margin-bottom:11px;overflow:hidden;transition:box-shadow .1s}
+  .folder:hover{box-shadow:0 6px 20px rgba(16,32,48,.09)}
+  .folder-head{display:flex;align-items:center;gap:11px;padding:14px 17px;cursor:pointer;user-select:none;transition:background .08s}
   .folder-head:hover{background:#f7faf6}
-  .folder-head .chev{width:15px;height:15px;color:var(--muted);transition:transform .15s;flex:none}
+  .folder-head .chev{width:15px;height:15px;color:var(--faint);transition:transform .15s;flex:none}
   .folder[data-open="0"] .chev{transform:rotate(-90deg)}
   .folder[data-open="0"] .folder-body{display:none}
-  .folder-name{font-size:14.5px;font-weight:700}
-  .folder-meta{margin-left:auto;font-size:12px;color:var(--faint);font-weight:600}
-  .folder-body{padding:2px 16px 16px}
+  .folder[data-open="0"]{background:#fcfdfe}
+  .folder-ico{font-size:17px;line-height:1;flex:none}
+  .folder-name{font-size:15px;font-weight:720;letter-spacing:-.1px}
+  .folder-meta{margin-left:auto;font-size:12px;color:var(--faint);font-weight:600;background:#f2f5f9;padding:3px 10px;border-radius:999px}
+  .folder-body{padding:3px 17px 17px}
+  .tcard .rows-lbl{font-size:12px;font-weight:600;color:var(--faint);letter-spacing:0}
+  .tag-model{display:inline-block;background:#eaf0fe;color:#2f52c9;font-weight:700;font-size:10.5px;padding:1px 7px;border-radius:999px;letter-spacing:.02em}
   .curated-empty{background:#fff;border:1px dashed #cfd8e3;border-radius:14px;padding:30px 26px;text-align:center;color:var(--faint);font-size:13.5px;line-height:1.6}
   /* ---------- explore ---------- */
   .toolbar{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
@@ -251,7 +263,9 @@ function groupByFolder(tables){
   arr.sort((a,b)=>(a.order-b.order)||a.name.localeCompare(b.name));
   return arr;
 }
-const LAYER_META={RAW:{order:1,badge:"raw",title:"Raw Data"},CURATED:{order:2,badge:"cur",title:"Curated · Silver"},SILVER:{order:2,badge:"cur",title:"Curated · Silver"}};
+const LAYER_META={RAW:{order:1,badge:"raw",title:"Raw Data"},CURATED:{order:2,badge:"cur",title:"Curated · Business Model"},SILVER:{order:2,badge:"cur",title:"Curated · Business Model"}};
+const LAYER_DESC={RAW:"Source data, loaded straight from the systems of record",CURATED:"Cleaned & modeled — ready for reporting",SILVER:"Cleaned & modeled — ready for reporting"};
+const FOLDER_ICONS={"Marketing & Leads":"📣","Communications":"☎️","Operations (Moves)":"🚚","Finances":"💰","Storage":"📦","Logistics Fleet":"👷","Customer Support Service":"🛟","Reviews":"⭐","Reference & Mappings":"🗺️","Facts":"📊","Dimensions":"🧩","Other":"🗂️"};
 /* group STATS entries into layers (RAW / CURATED), each holding folders */
 function groupByLayer(tables){
   const L={};
@@ -306,31 +320,37 @@ function renderOverview(){
     kpi("Source files",files,"loaded exports")+
     kpi("Last updated",ago(lastUpd),lastUpd?("on "+dOnly(lastUpd)):"");
   const card=t=>{
-    const chips=(t.by_file||[]).slice(0,8).map(f=>`<span class="chip">${f.file}: ${fmtN(f.rows)}</span>`).join("");
+    const chips=(t.by_file||[]).slice(0,6).map(f=>`<span class="chip">${f.file}: ${fmtN(f.rows)}</span>`).join("");
+    const nf=(t.by_file||[]).length;
+    const src=nf?`<b>${t.columns}</b> fields · <b>${nf}</b> source file${nf===1?'':'s'}`
+               :`<b>${t.columns}</b> fields · <span class="tag-model">modeled</span>`;
+    const cov=(t.date_min||t.date_max)?`<div>Coverage <b>${dOnly(t.date_min)}</b> → <b>${dOnly(t.date_max)}</b></div>`:"";
     return `<div class="tcard" data-table="${t.table}">
       <h3><span class="dot ${statusDot(t.last_update)}"></span>${dispName(t)}<span class="openhint">Explore →</span></h3>
-      <div class="rows">${fmtN(t.rows)}</div>
+      <div class="rows">${fmtN(t.rows)} <span class="rows-lbl">records</span></div>
       <div class="meta">
         <div>Updated <b>${ago(t.last_update)}</b> <span class="muted">(${dOnly(t.last_update)})</span></div>
-        <div>Coverage <b>${dOnly(t.date_min)}</b> → <b>${dOnly(t.date_max)}</b></div>
-        <div><b>${t.columns}</b> columns · <b>${(t.by_file||[]).length}</b> source file(s)</div>
-      </div><div class="chips">${chips}</div></div>`;
+        ${cov}
+        <div>${src}</div>
+      </div>${chips?`<div class="chips">${chips}</div>`:""}</div>`;
   };
   const folderPanel=f=>{
     const rows=f.items.reduce((a,t)=>a+t.rows,0);
     return `<div class="folder" data-open="1">
       <div class="folder-head">
         <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m6 9 6 6 6-6"/></svg>
+        <span class="folder-ico">${FOLDER_ICONS[f.name]||"📁"}</span>
         <span class="folder-name">${f.name}</span>
-        <span class="folder-meta">${f.items.length} dataset${f.items.length===1?'':'s'} · ${fmtN(rows)} rows</span>
+        <span class="folder-meta">${f.items.length} dataset${f.items.length===1?'':'s'} · ${fmtN(rows)} records</span>
       </div>
       <div class="folder-body"><div class="grid">${f.items.map(card).join("")}</div></div>
     </div>`;
   };
   const layerHead=(lay,count,rows,sub)=>{const m=LAYER_META[lay]||{badge:"cur",title:lay};
-    return `<div class="layer-head"><span class="layer-badge ${m.badge}">${lay}</span>`+
-      `<span class="layer-title">${m.title}</span>`+
-      `<span class="layer-sub">${sub!=null?sub:(count+" dataset"+(count===1?'':'s')+" · "+fmtN(rows)+" rows")}</span></div>`;};
+    return `<div class="layer-head ${m.badge}"><span class="layer-badge ${m.badge}">${lay}</span>`+
+      `<div class="layer-titles"><div class="layer-title">${m.title}</div>`+
+      `<div class="layer-desc">${LAYER_DESC[lay]||""}</div></div>`+
+      `<span class="layer-sub">${sub!=null?sub:(count+" dataset"+(count===1?'':'s')+" · "+fmtN(rows)+" records")}</span></div>`;};
   const layers=groupByLayer(T);
   let html=layers.map(l=>layerHead(l.layer,l.count,l.rows)+l.folders.map(folderPanel).join("")).join("");
   if(!layers.some(l=>l.layer!=="RAW")){
