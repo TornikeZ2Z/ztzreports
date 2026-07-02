@@ -146,6 +146,10 @@ window.RS = (function () {
         });
         _cache[ds] = rows; delete _loading[ds];
         return rows;
+      })
+      .catch(e => {
+        delete _loading[ds];   // never cache a failed load (e.g. expired token)
+        throw e;
       });
     return _loading[ds];
   }
