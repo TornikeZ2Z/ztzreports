@@ -13,7 +13,7 @@ window.RS = (function () {
       cols: ["Unique Key", "Record Source", "Company", "Date", "Customer", "Request #",
         "Source", "Move Type", "Pickup Zip", "Net Cash", "Total Bill", "Card Payment",
         "Balance Due", "Deposit", "Sales Person", "SP 2", "SP 3", "Foreman", "Foreman Hours",
-        "Driver", "Material Total", "Material $", "CF %", "Tip from Company",
+        "Driver", "Material Total", "Material $", "Tip from Company",
         "Tip From the Customers", "Review", "Satisfaction Score", "Total Expense",
         "Profit per Job", "State", "State Name", "Moving Type", "Size of Move",
         "Bill Range", "Commission Bucket Range", "Extra Bill From Trips", "Net Cash From Trips",
