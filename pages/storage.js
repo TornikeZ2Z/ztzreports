@@ -17,10 +17,9 @@ registerPage({
     const closingRows = RS.filtered("closing", closingAll);
     const M = RS.M;
 
-    // PBI name: "Storage Revenue Included in Total Bill" — SUM(num(Storage)) over
-    // closing rows; not in the RS.M registry, so computed inline.
-    const inclOf = rs => rs.reduce((a, r) => a + RS.num(r["Storage"]), 0);
-    const inclTotal = inclOf(closingRows);
+    // Exact DAX: both measures read Storage Payments, split on Payment Type —
+    // 'Paid at Pickup' = included in the job's Total Bill, everything else = additional.
+    const inclTotal = M["Storage Revenue Included in Total Bill"].fn(rows);
     const addTotal = M["Storage Additional Revenue"].fn(rows);
 
     host.innerHTML = `
@@ -37,8 +36,9 @@ registerPage({
     RSC.kpis(document.getElementById("kpis"), [
       { label: "Storage Additional Revenue", value: RS.money(addTotal), sub: "separate storage payments" },
       { label: "Storage Payments", value: RS.fmtN(rows.length), sub: "# payments in scope" },
-      { label: "Avg Payment", value: rows.length ? RS.money(addTotal / rows.length) : "—", sub: "revenue / payment" },
-      { label: "Storage Rev. in Total Bill", value: RS.money(inclTotal), sub: "billed inside closing jobs" },
+      { label: "Avg Payment", value: rows.length ? RS.money((addTotal + inclTotal) / rows.length) : "—", sub: "all storage revenue / payment" },
+      { label: "Storage Rev. in Total Bill", value: RS.money(inclTotal), sub: "paid at pickup (in job bill)" },
+      { label: "Storage Jobs", value: RS.fmtN(M["Total Storage Jobs"].fn(closingRows)), sub: "closings marked Our Storage" },
     ]);
 
     // ---- month buckets: additional (storage payments) + included-in-bill (closing)
@@ -48,7 +48,8 @@ registerPage({
     const closByMonth = {};
     closingRows.forEach(r => { const k = mk(r); (closByMonth[k] = closByMonth[k] || []).push(r); });
     const inclByMonth = {};
-    Object.entries(closByMonth).forEach(([k, rs]) => { inclByMonth[k] = inclOf(rs); });
+    RS.groupBy(rows, "_month", "Storage Revenue Included in Total Bill")
+      .forEach(x => { inclByMonth[x.k] = x.v; });
     const months = [...new Set([...Object.keys(addByMonth), ...Object.keys(closByMonth)])].sort();
     const now = new Date();
     const curKey = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
