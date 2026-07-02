@@ -6,7 +6,6 @@
 registerPage({
   id: "leads-by-state",
   group: "sales",
-  ico: "🗺️",
   title: "Leads by State",
   async render(host) {
     const all = await RS.load("moveboard");
@@ -88,7 +87,7 @@ registerPage({
           type: "bar",
           data: {
             labels: list.map(s => s.name),
-            datasets: [{ label: calcBy, data: list.map(val), backgroundColor: "#9ABA3C", borderRadius: 4 }],
+            datasets: [{ label: calcBy, data: list.map(val), backgroundColor: "#b7e23b", borderRadius: 4 }],
           },
           options: {
             indexAxis: "y", responsive: true, maintainAspectRatio: false,
@@ -126,7 +125,7 @@ registerPage({
           type: "bar",
           data: {
             labels: list.map(c => c.st !== "—" ? `${c.name}, ${c.st}` : c.name),
-            datasets: [{ label: "Total Leads", data: list.map(c => c.total), backgroundColor: "#9ABA3C", borderRadius: 4 }],
+            datasets: [{ label: "Total Leads", data: list.map(c => c.total), backgroundColor: "#b7e23b", borderRadius: 4 }],
           },
           options: {
             indexAxis: "y", responsive: true, maintainAspectRatio: false,
