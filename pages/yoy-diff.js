@@ -6,7 +6,6 @@
 registerPage({
   id: "yoy-diff",
   group: "overview",
-  ico: "📆",
   title: "YoY Diff",
   async render(host) {
     const rows = RS.filtered("closing", await RS.load("closing"));
@@ -79,9 +78,9 @@ registerPage({
             labels: years,
             datasets: [
               { type: "bar", label: calcBy, data: vals.map(v => Math.round(v)),
-                backgroundColor: "#9ABA3C", borderRadius: 4, yAxisID: "y", order: 2 },
+                backgroundColor: "#b7e23b", borderRadius: 4, yAxisID: "y", order: 2 },
               { type: "line", label: "YoY growth %", data: growth.map(g => g == null ? null : +(100 * g).toFixed(1)),
-                borderColor: "#3f62d8", backgroundColor: "#3f62d8", borderWidth: 2,
+                borderColor: "#5b8cff", backgroundColor: "#5b8cff", borderWidth: 2,
                 pointRadius: 3, tension: .3, spanGaps: false, yAxisID: "y1", order: 1 },
             ],
           },
@@ -127,8 +126,8 @@ registerPage({
     const trendYears = () => years.slice(-3);
     const LINE = [  // oldest → latest; latest year emphasised in brand blue
       { color: "#98a2b3", width: 2, dash: [5, 3] },
-      { color: "#9ABA3C", width: 2, dash: [] },
-      { color: "#3f62d8", width: 2.5, dash: [] },
+      { color: "#b7e23b", width: 2, dash: [] },
+      { color: "#5b8cff", width: 2.5, dash: [] },
     ];
     const monthCard = RSC.chartCard(document.getElementById("monthly"), {
       title: "Monthly trend (last 3 years)",
