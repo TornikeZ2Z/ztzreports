@@ -38,7 +38,7 @@
 </div>
 
 <script src="assets/portal.js?v=2"></script>
-<script src="assets/rs-core.js?v=2"></script>
+<script src="assets/rs-core.js?v=3"></script>
 <script src="assets/rs-components.js?v=2"></script>
 <script>
 /* ---------------- page registry ---------------- */
@@ -79,24 +79,20 @@ const PAGE_ICONS = {
   "jobs-vs-hours": "activity", "yoy-diff": "trend", "leads-analysis": "funnel",
   "leads-by-state": "pin", "storage": "archive", "analysis-by-category": "compass",
   "Analysis by Category": "compass", "Sales Person Analysis": "user",
+  "sales-person-analysis": "user",
   "Ads Analysis": "megaphone", "CallRail": "phone", "Forman": "tool",
-  "Forman Analysis": "sliders", "Packing": "box", "Packing Analysis": "clipboard",
-  "Packing per 100 CF": "gauge", "Claims": "shield", "Reviews": "star",
+  "Forman Analysis": "sliders", "forman-analysis": "sliders",
+  "Packing": "box", "Packing Analysis": "clipboard",
+  "packing-analysis": "clipboard",
+  "Packing per 100 CF": "gauge", "packing-per-100cf": "gauge",
+  "Claims": "shield", "Reviews": "star",
+  "reviews": "star",
+  "ads-analysis": "megaphone", "callrail": "phone", "forman": "tool",
+  "packing": "box", "claims": "shield",
 };
 
 /* Pages not yet built — shown greyed with a SOON tag so the full scope is visible. */
-const PLANNED = [
-  { group: "sales",     title: "Sales Person Analysis" },
-  { group: "sales",     title: "Ads Analysis" },
-  { group: "sales",     title: "CallRail" },
-  { group: "ops",       title: "Forman" },
-  { group: "ops",       title: "Forman Analysis" },
-  { group: "ops",       title: "Packing" },
-  { group: "ops",       title: "Packing Analysis" },
-  { group: "ops",       title: "Packing per 100 CF" },
-  { group: "ops",       title: "Claims" },
-  { group: "customers", title: "Reviews" },
-];
+const PLANNED = [];  // all 16 General Overview pages are built
 
 /* Dark chart theme (applies to every Chart.js instance). */
 Chart.defaults.color = "#8b98a8";
@@ -238,5 +234,15 @@ if (!ZTZ.getToken()) {
 <script src="pages/leads-analysis.js?v=2"></script>
 <script src="pages/leads-by-state.js?v=2"></script>
 <script src="pages/storage.js?v=2"></script>
+<script src="pages/sales-person-analysis.js?v=2"></script>
+<script src="pages/ads-analysis.js?v=2"></script>
+<script src="pages/callrail.js?v=2"></script>
+<script src="pages/forman.js?v=2"></script>
+<script src="pages/packing.js?v=2"></script>
+<script src="pages/claims.js?v=2"></script>
+<script src="pages/reviews.js?v=2"></script>
+<script src="pages/packing-analysis.js?v=2"></script>
+<script src="pages/forman-analysis.js?v=2"></script>
+<script src="pages/packing-per-100cf.js?v=2"></script>
 </body>
 </html>
