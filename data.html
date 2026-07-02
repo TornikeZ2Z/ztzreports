@@ -309,7 +309,13 @@ async function applySession(token){
   try{await loadStats();}catch(e){document.getElementById("gateErr").textContent=e.message;logout();return;}
   switchTab("overview");
 }
-window.onSignIn=(resp)=>applySession(resp.credential);
+async function exchangeToken(credential){
+  // Trade the ~1h Google ID token for a long-lived (12h) bridge session token so
+  // the user isn't forced to re-sign-in every hour; fall back to the raw token.
+  try{const r=await fetch(API+"/api/_session",{method:"POST",headers:{Authorization:"Bearer "+credential}});
+    if(r.ok){const j=await r.json();if(j&&j.token)return j.token;}}catch(e){}
+  return credential;}
+window.onSignIn=async(resp)=>applySession(await exchangeToken(resp.credential));
 function restoreSession(){let t=null;try{t=localStorage.getItem("ztz_tok");}catch(e){}
   if(t&&tokenValid(t))applySession(t);}
 
