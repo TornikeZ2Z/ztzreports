@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/portal.css?v=2">
-<link rel="stylesheet" href="assets/rs.css?v=3">
+<link rel="stylesheet" href="assets/rs.css?v=4">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body class="rs-app">
@@ -33,12 +33,13 @@
   </aside>
   <div class="rs-main">
     <div class="rs-filters" id="filters"></div>
+    <div class="rs-chips hidden" id="chips"></div>
     <div class="rs-content" id="content"></div>
   </div>
 </div>
 
 <script src="assets/portal.js?v=2"></script>
-<script src="assets/rs-core.js?v=3"></script>
+<script src="assets/rs-core.js?v=4"></script>
 <script src="assets/rs-components.js?v=2"></script>
 <script>
 /* ---------------- page registry ---------------- */
@@ -106,6 +107,68 @@ Chart.defaults.plugins.tooltip.titleColor = "#e9eef6";
 Chart.defaults.plugins.tooltip.bodyColor = "#8b98a8";
 Chart.defaults.plugins.tooltip.padding = 10;
 Chart.defaults.plugins.tooltip.cornerRadius = 9;
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.pointStyle = "rectRounded";
+Chart.defaults.plugins.legend.labels.boxWidth = 9;
+Chart.defaults.plugins.legend.labels.boxHeight = 9;
+Chart.defaults.datasets.bar.maxBarThickness = 44;
+
+/* ---- beautifier: every chart gets gradient bars / soft area fills / crisp hovers,
+   applied by wrapping the Chart constructor so page modules stay untouched. ---- */
+const _hexA = (hex, a) => hex + Math.round(a * 255).toString(16).padStart(2, "0");
+function _grad(c, hex, horiz) {
+  const { ctx, chartArea } = c.chart;
+  if (!chartArea) return hex;
+  const g = horiz
+    ? ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0)
+    : ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+  g.addColorStop(0, _hexA(hex, .45));
+  g.addColorStop(1, hex);
+  return g;
+}
+function _beautify(config) {
+  try {
+    const datasets = (config.data && config.data.datasets) || [];
+    const horiz = config.options && config.options.indexAxis === "y";
+    const hasBars = datasets.some(d => (d.type || config.type) === "bar");
+    datasets.forEach(ds => {
+      const t = ds.type || config.type;
+      if (t === "bar" && typeof ds.backgroundColor === "string" && ds.backgroundColor[0] === "#") {
+        const hex = ds.backgroundColor;
+        ds.backgroundColor = c => _grad(c, hex, horiz);
+        ds.hoverBackgroundColor = hex;
+        if (ds.borderRadius == null) ds.borderRadius = 6;
+      }
+      if (t === "line") {
+        if (ds.pointHoverRadius == null) ds.pointHoverRadius = 5;
+        if (!ds.borderWidth || ds.borderWidth < 2) ds.borderWidth = 2;
+      }
+      if ((t === "doughnut" || t === "pie") && Array.isArray(ds.backgroundColor)) {
+        if (ds.borderColor == null) ds.borderColor = "#0f1523";
+        if (ds.borderWidth == null || ds.borderWidth <= 1) ds.borderWidth = 2;
+        if (ds.hoverOffset == null) ds.hoverOffset = 8;
+      }
+    });
+    // pure line charts with a single series get a soft area fill under the line
+    const lines = datasets.filter(d => (d.type || config.type) === "line");
+    if (!hasBars && lines.length === 1 && lines[0].fill === undefined &&
+        typeof lines[0].borderColor === "string" && lines[0].borderColor[0] === "#") {
+      const hex = lines[0].borderColor;
+      lines[0].fill = "origin";
+      lines[0].backgroundColor = c => {
+        const { ctx, chartArea } = c.chart;
+        if (!chartArea) return _hexA(hex, .10);
+        const g = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+        g.addColorStop(0, _hexA(hex, .26)); g.addColorStop(1, _hexA(hex, 0));
+        return g;
+      };
+    }
+  } catch (e) { console.warn("chart beautify skipped:", e); }
+}
+const _RawChart = Chart;
+window.Chart = class extends _RawChart {
+  constructor(item, config) { _beautify(config || {}); super(item, config); }
+};
 
 let CURRENT = null;
 
@@ -153,18 +216,56 @@ function buildNav() {
   });
 }
 
-/* ---------------- global filter bar ---------------- */
+/* ------------- global filter bar v2: primary slicers + More popover + chips ------------- */
 let rerenderTimer = null;
 function onFilterChange() {
   clearTimeout(rerenderTimer);
+  paintChips();
   rerenderTimer = setTimeout(renderPage, 120);
+}
+
+const PRIMARY   = ["year", "month", "company", "source", "foreman"];
+const SECONDARY = ["sales", "state", "cfRange", "billRange", "movingType", "sizeOfMove", "statusCat"];
+const activeCount = keys => keys.reduce((a, k) =>
+  a + ((RS.state.multi[k] && RS.state.multi[k].size) ? 1 : 0), 0);
+
+function paintChips() {
+  const host = document.getElementById("chips");
+  if (!host) return;
+  const chips = [];
+  if (RS.state.dateFrom || RS.state.dateTo)
+    chips.push({ k: "_date", label: "Date " + (RS.state.dateFrom || "…") + " → " + (RS.state.dateTo || "…") });
+  if (RS.state.dayFrom != null || RS.state.dayTo != null)
+    chips.push({ k: "_day", label: "Day " + (RS.state.dayFrom ?? 1) + "–" + (RS.state.dayTo ?? 31) });
+  Object.entries(RS.state.multi).forEach(([k, set]) => {
+    if (!set || !set.size || !RS.FIELDS[k]) return;
+    const vals = [...set];
+    chips.push({ k, label: RS.FIELDS[k].label + ": " +
+      (vals.length <= 2 ? vals.join(", ") : vals.length + " selected") });
+  });
+  host.innerHTML = chips.map(c =>
+    `<span class="rs-chip">${RSC.esc(c.label)}<button data-k="${c.k}" title="Remove filter">×</button></span>`).join("") +
+    (chips.length ? `<button class="rs-chip clear" id="chipClearAll">Clear all</button>` : "");
+  host.classList.toggle("hidden", !chips.length);
+  host.querySelectorAll(".rs-chip button[data-k]").forEach(b => b.onclick = () => {
+    const k = b.dataset.k;
+    if (k === "_date") { RS.state.dateFrom = RS.state.dateTo = null; }
+    else if (k === "_day") { RS.state.dayFrom = RS.state.dayTo = null; }
+    else RS.state.multi[k].clear();
+    buildFilters().then(renderPage);
+  });
+  const ca = host.querySelector("#chipClearAll");
+  if (ca) ca.onclick = () => {
+    Object.values(RS.state.multi).forEach(s => s.clear());
+    RS.state.dateFrom = RS.state.dateTo = RS.state.dayFrom = RS.state.dayTo = null;
+    buildFilters().then(renderPage);
+  };
 }
 
 async function buildFilters() {
   const host = document.getElementById("filters");
   host.innerHTML = "";
   RSC.dateBar(host, onFilterChange);
-  // Slicer values come from the two main datasets (loaded lazily but both needed here).
   const [closing, moveboard] = await Promise.all([RS.load("closing"), RS.load("moveboard")]);
   const distinct = (rows, col, sortDesc) => {
     const s = new Set();
@@ -172,30 +273,47 @@ async function buildFilters() {
     const arr = [...s].sort();
     return sortDesc ? arr.reverse() : arr;
   };
-  const monthVals = ["1","2","3","4","5","6","7","8","9","10","11","12"];
-  const defs = [
-    ["year",       distinct(closing, "_y", true)],
-    ["month",      monthVals],
-    ["company",    distinct(closing, "Company")],
-    ["source",     distinct(closing, "Source")],
-    ["state",      distinct(closing, "State")],
-    ["foreman",    distinct(closing, "Foreman")],
-    ["sales",      distinct(closing, "Sales Person")],
-    ["cfRange",    ["0-200","201-500","501-800","801-1000","1001-1500","1501-2000","Over 2000"]],
-    ["billRange",  ["$0 - $500","$501 - $1,000","$1,001 - $3,000","$3,001 - $5,000","$5,001 - $10,000","$10,001 - $20,000","Over $20,000"]],
-    ["movingType", ["Local Moving","Regular Moving","Straight Moving"]],
-    ["sizeOfMove", distinct(moveboard, "Size of Move")],
-    ["statusCat",  distinct(moveboard, "Status Category")],
-  ];
-  defs.forEach(([key, values]) =>
-    RSC.multiSelect(host, { key, label: RS.FIELDS[key].label, values, onChange: onFilterChange }));
-  const clear = RSC.el("button", "rs-clear", "✕ Clear all");
-  clear.onclick = () => {
-    Object.values(RS.state.multi).forEach(s => s.clear());
-    RS.state.dateFrom = RS.state.dateTo = RS.state.dayFrom = RS.state.dayTo = null;
-    buildFilters().then(renderPage);
+  const VALUES = {
+    year:       distinct(closing, "_y", true),
+    month:      ["1","2","3","4","5","6","7","8","9","10","11","12"],
+    company:    distinct(closing, "Company"),
+    source:     distinct(closing, "Source"),
+    foreman:    distinct(closing, "Foreman"),
+    sales:      distinct(closing, "Sales Person"),
+    state:      distinct(closing, "State"),
+    cfRange:    ["0-200","201-500","501-800","801-1000","1001-1500","1501-2000","Over 2000"],
+    billRange:  ["$0 - $500","$501 - $1,000","$1,001 - $3,000","$3,001 - $5,000","$5,001 - $10,000","$10,001 - $20,000","Over $20,000"],
+    movingType: ["Local Moving","Regular Moving","Straight Moving"],
+    sizeOfMove: distinct(moveboard, "Size of Move"),
+    statusCat:  distinct(moveboard, "Status Category"),
   };
-  host.appendChild(clear);
+  PRIMARY.forEach(key => RSC.multiSelect(host,
+    { key, label: RS.FIELDS[key].label, values: VALUES[key], onChange: onFilterChange }));
+
+  // "More" popover hosts the secondary slicers in a 2-column grid.
+  const wrap = RSC.el("div", "rs-slicer");
+  const btn = RSC.el("button", "rs-slicer-btn");
+  const pop = RSC.el("div", "rs-slicer-pop rs-more-pop hidden");
+  const paintMore = () => {
+    const n = activeCount(SECONDARY);
+    btn.innerHTML = `<span class="lbl">More</span><span class="val">${n ? n + " active" : "filters"}</span><span class="chev">▾</span>`;
+    btn.classList.toggle("on", n > 0);
+  };
+  SECONDARY.forEach(key => {
+    const cell = RSC.el("div", "more-cell");
+    pop.appendChild(cell);
+    RSC.multiSelect(cell, { key, label: RS.FIELDS[key].label, values: VALUES[key],
+      onChange: () => { paintMore(); onFilterChange(); } });
+  });
+  btn.onclick = e => {
+    e.stopPropagation();
+    document.querySelectorAll(".rs-slicer-pop").forEach(p => { if (p !== pop && !pop.contains(p)) p.classList.add("hidden"); });
+    pop.classList.toggle("hidden");
+  };
+  pop.addEventListener("click", e => e.stopPropagation());
+  wrap.appendChild(btn); wrap.appendChild(pop); host.appendChild(wrap);
+  paintMore();
+  paintChips();
 }
 
 /* ---------------- boot ---------------- */
