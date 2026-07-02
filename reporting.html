@@ -32,7 +32,10 @@
     <div class="foot"><b>Live data</b> · curated warehouse<br>Auto-refresh every 6 hours</div>
   </aside>
   <div class="rs-main">
-    <div class="rs-filters" id="filters"></div>
+    <div class="rs-filters" id="filters">
+      <div class="rs-frow" id="frowDates"></div>
+      <div class="rs-frow" id="frowSlicers"></div>
+    </div>
     <div class="rs-chips hidden" id="chips"></div>
     <div class="rs-content" id="content"></div>
   </div>
@@ -48,6 +51,7 @@ window.registerPage = p => PAGES.push(p);
 
 /* Groups shown in the sidebar (pages register with group keys). */
 const GROUPS = [
+  { key: "pulse",     title: "Pulse" },
   { key: "overview",  title: "Overview & Growth" },
   { key: "sales",     title: "Sales & Leads" },
   { key: "ops",       title: "Operations" },
@@ -73,6 +77,7 @@ const ICONS = {
   star:      '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
   archive:   '<path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/>',
   doc:       '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',
+  spark:     '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
 };
 const icon = k => `<svg viewBox="0 0 24 24">${ICONS[k] || ICONS.doc}</svg>`;
 /* page id / planned title → icon key */
@@ -89,7 +94,7 @@ const PAGE_ICONS = {
   "Claims": "shield", "Reviews": "star",
   "reviews": "star",
   "ads-analysis": "megaphone", "callrail": "phone", "forman": "tool",
-  "packing": "box", "claims": "shield",
+  "packing": "box", "claims": "shield", "insights": "spark",
 };
 
 /* Pages not yet built — shown greyed with a SOON tag so the full scope is visible. */
@@ -263,9 +268,11 @@ function paintChips() {
 }
 
 async function buildFilters() {
-  const host = document.getElementById("filters");
-  host.innerHTML = "";
-  RSC.dateBar(host, onFilterChange);
+  // Line 1 = date controls; line 2 = every other filter (user-specified layout).
+  const rowDates = document.getElementById("frowDates");
+  const rowSlicers = document.getElementById("frowSlicers");
+  rowDates.innerHTML = ""; rowSlicers.innerHTML = "";
+  RSC.dateBar(rowDates, onFilterChange);
   const [closing, moveboard] = await Promise.all([RS.load("closing"), RS.load("moveboard")]);
   const distinct = (rows, col, sortDesc) => {
     const s = new Set();
@@ -287,32 +294,8 @@ async function buildFilters() {
     sizeOfMove: distinct(moveboard, "Size of Move"),
     statusCat:  distinct(moveboard, "Status Category"),
   };
-  PRIMARY.forEach(key => RSC.multiSelect(host,
+  PRIMARY.concat(SECONDARY).forEach(key => RSC.multiSelect(rowSlicers,
     { key, label: RS.FIELDS[key].label, values: VALUES[key], onChange: onFilterChange }));
-
-  // "More" popover hosts the secondary slicers in a 2-column grid.
-  const wrap = RSC.el("div", "rs-slicer");
-  const btn = RSC.el("button", "rs-slicer-btn");
-  const pop = RSC.el("div", "rs-slicer-pop rs-more-pop hidden");
-  const paintMore = () => {
-    const n = activeCount(SECONDARY);
-    btn.innerHTML = `<span class="lbl">More</span><span class="val">${n ? n + " active" : "filters"}</span><span class="chev">▾</span>`;
-    btn.classList.toggle("on", n > 0);
-  };
-  SECONDARY.forEach(key => {
-    const cell = RSC.el("div", "more-cell");
-    pop.appendChild(cell);
-    RSC.multiSelect(cell, { key, label: RS.FIELDS[key].label, values: VALUES[key],
-      onChange: () => { paintMore(); onFilterChange(); } });
-  });
-  btn.onclick = e => {
-    e.stopPropagation();
-    document.querySelectorAll(".rs-slicer-pop").forEach(p => { if (p !== pop && !pop.contains(p)) p.classList.add("hidden"); });
-    pop.classList.toggle("hidden");
-  };
-  pop.addEventListener("click", e => e.stopPropagation());
-  wrap.appendChild(btn); wrap.appendChild(pop); host.appendChild(wrap);
-  paintMore();
   paintChips();
 }
 
@@ -346,6 +329,7 @@ if (!ZTZ.getToken()) {
 }
 </script>
 <!-- page modules (each calls registerPage) -->
+<script src="pages/insights.js?v=1"></script>
 <script src="pages/jobs-vs-hours.js?v=2"></script>
 <script src="pages/analysis-by-category.js?v=2"></script>
 <script src="pages/yoy-diff.js?v=2"></script>
