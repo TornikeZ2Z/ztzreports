@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zip to Zip — Reporting System</title>
 <link rel="icon" type="image/png" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/portal.css">
 <link rel="stylesheet" href="assets/rs.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -26,7 +29,7 @@
   <aside class="rs-side" id="side">
     <div class="search"><input type="text" id="navSearch" placeholder="Find a report…"></div>
     <div id="nav"></div>
-    <div class="foot">Live from the curated warehouse.<br>Data refreshes every 6 hours.</div>
+    <div class="foot"><b>Live data</b> · curated warehouse<br>Auto-refresh every 6 hours</div>
   </aside>
   <div class="rs-main">
     <div class="rs-filters" id="filters"></div>
@@ -44,26 +47,70 @@ window.registerPage = p => PAGES.push(p);
 
 /* Groups shown in the sidebar (pages register with group keys). */
 const GROUPS = [
-  { key: "overview",  title: "Overview & Growth",   ico: "📈" },
-  { key: "sales",     title: "Sales & Leads",       ico: "💼" },
-  { key: "ops",       title: "Operations",          ico: "🚚" },
-  { key: "customers", title: "Customers & Storage",  ico: "⭐" },
+  { key: "overview",  title: "Overview & Growth" },
+  { key: "sales",     title: "Sales & Leads" },
+  { key: "ops",       title: "Operations" },
+  { key: "customers", title: "Customers & Storage" },
 ];
+
+/* Inline SVG icon set (Feather-style, stroke-based) — no emojis anywhere. */
+const ICONS = {
+  activity:  '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+  trend:     '<path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/>',
+  compass:   '<circle cx="12" cy="12" r="10"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/>',
+  user:      '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  funnel:    '<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>',
+  pin:       '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+  megaphone: '<path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
+  phone:     '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  tool:      '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  sliders:   '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+  box:       '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/>',
+  clipboard: '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/>',
+  gauge:     '<circle cx="12" cy="12" r="10"/><path d="M12 12l4.5-4.5"/><path d="M7 12h.01M12 7v.01M17 12h.01"/>',
+  shield:    '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  star:      '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  archive:   '<path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/>',
+  doc:       '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',
+};
+const icon = k => `<svg viewBox="0 0 24 24">${ICONS[k] || ICONS.doc}</svg>`;
+/* page id / planned title → icon key */
+const PAGE_ICONS = {
+  "jobs-vs-hours": "activity", "yoy-diff": "trend", "leads-analysis": "funnel",
+  "leads-by-state": "pin", "storage": "archive",
+  "Analysis by Category": "compass", "Sales Person Analysis": "user",
+  "Ads Analysis": "megaphone", "CallRail": "phone", "Forman": "tool",
+  "Forman Analysis": "sliders", "Packing": "box", "Packing Analysis": "clipboard",
+  "Packing per 100 CF": "gauge", "Claims": "shield", "Reviews": "star",
+};
 
 /* Pages not yet built — shown greyed with a SOON tag so the full scope is visible. */
 const PLANNED = [
-  { group: "overview",  ico: "🧭", title: "Analysis by Category" },
-  { group: "sales",     ico: "🧑‍💼", title: "Sales Person Analysis" },
-  { group: "sales",     ico: "📣", title: "Ads Analysis" },
-  { group: "sales",     ico: "☎️", title: "CallRail" },
-  { group: "ops",       ico: "🛠️", title: "Forman" },
-  { group: "ops",       ico: "📐", title: "Forman Analysis" },
-  { group: "ops",       ico: "📦", title: "Packing" },
-  { group: "ops",       ico: "🧾", title: "Packing Analysis" },
-  { group: "ops",       ico: "📏", title: "Packing per 100 CF" },
-  { group: "ops",       ico: "🛡️", title: "Claims" },
-  { group: "customers", ico: "⭐", title: "Reviews" },
+  { group: "overview",  title: "Analysis by Category" },
+  { group: "sales",     title: "Sales Person Analysis" },
+  { group: "sales",     title: "Ads Analysis" },
+  { group: "sales",     title: "CallRail" },
+  { group: "ops",       title: "Forman" },
+  { group: "ops",       title: "Forman Analysis" },
+  { group: "ops",       title: "Packing" },
+  { group: "ops",       title: "Packing Analysis" },
+  { group: "ops",       title: "Packing per 100 CF" },
+  { group: "ops",       title: "Claims" },
+  { group: "customers", title: "Reviews" },
 ];
+
+/* Dark chart theme (applies to every Chart.js instance). */
+Chart.defaults.color = "#8b98a8";
+Chart.defaults.borderColor = "#1c2636";
+Chart.defaults.font.family = "Inter, -apple-system, 'Segoe UI', Roboto, sans-serif";
+Chart.defaults.font.size = 11.5;
+Chart.defaults.plugins.tooltip.backgroundColor = "#0d1320";
+Chart.defaults.plugins.tooltip.borderColor = "#243248";
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+Chart.defaults.plugins.tooltip.titleColor = "#e9eef6";
+Chart.defaults.plugins.tooltip.bodyColor = "#8b98a8";
+Chart.defaults.plugins.tooltip.padding = 10;
+Chart.defaults.plugins.tooltip.cornerRadius = 9;
 
 let CURRENT = null;
 
@@ -97,16 +144,16 @@ function buildNav() {
     const planned = PLANNED.filter(p => p.group === g.key && p.title.toLowerCase().includes(q));
     if (!items.length && !planned.length) return;
     const box = RSC.el("div", "rs-group",
-      `<div class="g-title">${g.ico} ${g.title}</div>`);
+      `<div class="g-title">${g.title}</div>`);
     items.forEach(p => {
       const a = RSC.el("div", "rs-nav-item" + (CURRENT && CURRENT.id === p.id ? " active" : ""),
-        `<span class="ico">${p.ico || "📄"}</span>${RSC.esc(p.title)}`);
+        icon(PAGE_ICONS[p.id]) + RSC.esc(p.title));
       a.dataset.id = p.id;
       a.onclick = () => navigate(p.id);
       box.appendChild(a);
     });
     planned.forEach(p => box.appendChild(RSC.el("div", "rs-nav-item disabled",
-      `<span class="ico">${p.ico}</span>${RSC.esc(p.title)}<span class="soon">SOON</span>`)));
+      icon(PAGE_ICONS[p.title]) + RSC.esc(p.title) + `<span class="soon">SOON</span>`)));
     navHost.appendChild(box);
   });
 }
