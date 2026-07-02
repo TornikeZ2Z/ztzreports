@@ -52,7 +52,9 @@ body.rs-app .gate p{color:var(--muted)}
 .rs-main{flex:1;display:flex;flex-direction:column;min-width:0;background:
   radial-gradient(1200px 500px at 85% -10%,rgba(91,140,255,.06),transparent 60%),
   radial-gradient(900px 420px at 8% 110%,rgba(183,226,59,.05),transparent 55%),var(--bg)}
-.rs-filters{background:rgba(13,19,32,.72);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;z-index:30}
+.rs-filters{background:rgba(13,19,32,.72);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:9px 18px;z-index:30}
+.rs-frow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rs-frow + .rs-frow{margin-top:8px;padding-top:8px;border-top:1px dashed rgba(28,38,54,.9)}
 .rs-content{flex:1;overflow-y:auto;padding:16px 20px 60px}
 .rs-page-head{margin:0 0 13px}
 .rs-page-head h1{font-size:19px;font-weight:800;letter-spacing:-.5px;margin:0 0 3px;color:var(--ink)}
@@ -105,6 +107,16 @@ body.rs-app .gate p{color:var(--muted)}
 .rs-more-pop .more-cell .rs-slicer{width:100%}
 .rs-more-pop .rs-slicer-btn{width:100%;justify-content:space-between}
 
+/* ---------- insights page ---------- */
+.rec{display:flex;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:#0e1522;align-items:flex-start}
+.rec .sev{width:9px;height:9px;border-radius:99px;margin-top:5px;flex:none;box-shadow:0 0 8px currentColor}
+.rec .sev.high{background:var(--red);color:var(--red)}
+.rec .sev.med{background:var(--amber);color:var(--amber)}
+.rec .sev.info{background:var(--blue);color:var(--blue)}
+.rec .t{font-size:13px;font-weight:700;color:var(--ink)}
+.rec .d{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.5}
+.insight-note{font-size:11.5px;color:var(--faint);margin:-6px 0 14px}
+
 /* ---------- page-load motion ---------- */
 .rs-content .rs-page-head,.rs-content .rs-kpis,.rs-content .panel{animation:rsfade .28s ease-out both}
 @keyframes rsfade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
@@ -119,8 +131,8 @@ body.rs-app .gate p{color:var(--muted)}
 .rs-kpis .kpi .v{font-size:20px;font-weight:800;margin-top:5px;letter-spacing:-.6px;color:var(--ink);font-variant-numeric:tabular-nums}
 .rs-kpis .kpi .s{font-size:10.5px;color:var(--faint);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rs-kpis .kpi .s b{color:var(--muted)}
-.rs-kpis .kpi .s .up{color:var(--brand)}
-.rs-kpis .kpi .s .down{color:var(--red)}
+body.rs-app span.up{color:var(--brand);font-weight:700}
+body.rs-app span.down{color:var(--red);font-weight:700}
 
 /* ---------- panels / chart cards ---------- */
 body.rs-app .panel{background:linear-gradient(180deg,#121a29,#0f1523);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:13px 15px;margin-bottom:14px}
