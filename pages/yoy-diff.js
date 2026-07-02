@@ -45,14 +45,20 @@ registerPage({
       }));
     } else {
       const cy = years[years.length - 1], py = years[years.length - 2];
+      // The latest year is usually PARTIAL — comparing it to a full prior year is
+      // misleading. Compare Jan 1 → latest data date vs the SAME window last year.
+      const maxD = rows.reduce((a, r) => (r._d > a ? r._d : a), "");
+      const cut = maxD.slice(4);                          // "-MM-DD"
+      const pyRows = py ? (byYear[py] || []).filter(r => r._d.slice(4) <= cut) : [];
       kpiItems = KPI.map(name => {
         const m = M[name];
-        const cur = cy ? m.fn(byYear[cy]) : null, prev = py ? m.fn(byYear[py]) : null;
+        const cur = cy ? m.fn(byYear[cy]) : null;
+        const prev = py ? m.fn(pyRows) : null;
         // inline: PBI "<measure> Yearly Growth Rate" pattern — not in RS.M registry
         const g = (prev && cur != null) ? (cur - prev) / Math.abs(prev) : null;
-        return { label: name, value: m.fmt(m.fn(rows)),
-          sub: g == null ? "single year in scope"
-             : `${growthTxt(g)} · ${cy} vs ${py} (${m.fmt(prev)})` };
+        return { label: name, value: cur == null ? "—" : m.fmt(cur),
+          sub: g == null ? `${cy || ""} to date`
+             : `${growthTxt(g)} · ${cy} YTD vs ${py} same period (${m.fmt(prev)})` };
       });
     }
     RSC.kpis(document.getElementById("kpis"), kpiItems);
