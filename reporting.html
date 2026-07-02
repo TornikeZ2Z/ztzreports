@@ -211,6 +211,11 @@ if (!ZTZ.getToken()) {
     .catch(e => document.getElementById("gateErr").textContent = e.message);
 } else {
   document.getElementById("app").classList.remove("hidden");
+  // Immediate boot state — the first dataset fetch takes a few seconds and the
+  // slicers can't populate until it lands; never show an empty void.
+  document.getElementById("content").innerHTML =
+    `<div class="rs-loading"><div>Connecting to the warehouse — <b>loading live datasets</b>…</div>` +
+    `<div class="bar"><i></i></div></div>`;
   document.getElementById("navSearch").oninput = buildNav;
   window.addEventListener("hashchange", () => {
     const id = (location.hash.match(/page=([\w-]+)/) || [])[1];
