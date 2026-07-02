@@ -182,8 +182,13 @@ window.RS = (function () {
   register("Big Jobs", "moveboard", fmtN,
     rows => rows.filter(r => r["Big Job Status"] === "Yes").length);
 
-  // --- Storage.
-  register("Storage Additional Revenue", "storage", money, rows => sum(rows, "Amount"));
+  // --- Storage (exact DAX: split on Payment Type = 'Paid at Pickup').
+  register("Storage Additional Revenue", "storage", money,
+    rows => sum(rows.filter(r => String(r["Payment Type"] || "") !== "Paid at Pickup"), "Amount"));
+  register("Storage Revenue Included in Total Bill", "storage", money,
+    rows => sum(rows.filter(r => String(r["Payment Type"] || "") === "Paid at Pickup"), "Amount"));
+  register("Total Storage Jobs", "closing", fmtN,
+    rows => rows.filter(r => r["Storage"] === "Our Storage").length);
 
   // --- Refunds.
   register("Total Refunds", "refunds", money, rows => sum(rows, "Total refund"));
