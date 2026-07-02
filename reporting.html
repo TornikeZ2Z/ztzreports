@@ -5,64 +5,158 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zip to Zip — Reporting System</title>
 <link rel="icon" type="image/png" href="logo.png">
-<link rel="apple-touch-icon" href="logo.png">
 <link rel="stylesheet" href="assets/portal.css">
+<link rel="stylesheet" href="assets/rs.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
-<body>
+<body class="rs-app">
 <header class="top" id="ztzHeader"></header>
 
-<main>
-  <section id="gate" class="gate hidden">
-    <div class="card">
-      <img src="logo.png" alt="Zip to Zip Moving" style="width:92px;height:92px;border-radius:20px;display:block;margin:0 auto 18px;box-shadow:var(--shadow)">
-      <h1>Reporting System</h1>
-      <p>Sign in with your <b>@ziptozipmoving.com</b> Google account to open the dashboards.</p>
-      <div class="signin-slot" id="gateSign"></div>
-      <div class="err" id="gateErr" style="margin-top:12px"></div>
-    </div>
-  </section>
+<section id="gate" class="gate hidden">
+  <div class="card">
+    <img src="logo.png" alt="Zip to Zip Moving" style="width:92px;height:92px;border-radius:20px;display:block;margin:0 auto 18px;box-shadow:var(--shadow)">
+    <h1>Reporting System</h1>
+    <p>Sign in with your <b>@ziptozipmoving.com</b> Google account to open the dashboards.</p>
+    <div class="signin-slot" id="gateSign"></div>
+    <div class="err" id="gateErr" style="margin-top:12px"></div>
+  </div>
+</section>
 
-  <section id="app" class="hidden">
-    <div class="hub-head">
-      <h1>Reporting System</h1>
-      <p>The General Analysis dashboards, rebuilt from Power BI on the curated warehouse — same measures, same filters, live data. Pages go live one by one as they are verified against the original report.</p>
-    </div>
-    <div id="groups"></div>
-  </section>
-</main>
-
-<footer><span>🔒 Read-only · secured by company Google sign-in</span><span class="spacer"></span><span>General Analysis Report · 16 pages</span></footer>
+<div class="rs-layout hidden" id="app">
+  <aside class="rs-side" id="side">
+    <div class="search"><input type="text" id="navSearch" placeholder="Find a report…"></div>
+    <div id="nav"></div>
+    <div class="foot">Live from the curated warehouse.<br>Data refreshes every 6 hours.</div>
+  </aside>
+  <div class="rs-main">
+    <div class="rs-filters" id="filters"></div>
+    <div class="rs-content" id="content"></div>
+  </div>
+</div>
 
 <script src="assets/portal.js"></script>
+<script src="assets/rs-core.js"></script>
+<script src="assets/rs-components.js"></script>
 <script>
-/* Registry of the 16 General Overview pages. `href` + live:true once a page is built & verified. */
-const DASHBOARDS = [
-  { group: "📈 Overview & Growth", items: [
-    { t: "Jobs Done vs Hours Worked", d: "Foreman output vs hours worked — KPIs, switchable measures (Jobs / Bill / Net Cash / Card), graph & tabular views.", ico: "👷", href: "general-analysis.html", live: true },
-    { t: "YoY Diff", d: "Year-over-year growth across the core measures.", ico: "📆" },
-    { t: "Analysis by Category", d: "Core measures broken down by business category.", ico: "🧭" },
-  ]},
-  { group: "💼 Sales & Leads", items: [
-    { t: "Sales Person Analysis", d: "Sales performance — bookings, revenue and conversion by sales person.", ico: "🧑‍💼" },
-    { t: "Leads Analysis", d: "Lead volume, sources and outcomes across providers.", ico: "🧲" },
-    { t: "Leads by State", d: "Geographic lead distribution and performance by state.", ico: "🗺️" },
-    { t: "Ads Analysis", d: "Advertising performance and lead generation by channel.", ico: "📣" },
-    { t: "CallRail", d: "Call tracking — volumes, sources and outcomes from CallRail.", ico: "☎️" },
-  ]},
-  { group: "🚚 Operations", items: [
-    { t: "Forman", d: "Foreman scorecard — jobs, hours, revenue and scores.", ico: "🛠️" },
-    { t: "Forman Analysis", d: "Deeper foreman comparisons across measures and time.", ico: "📐" },
-    { t: "Packing", d: "Packing revenue and materials performance.", ico: "📦" },
-    { t: "Packing Analysis", d: "Packing sold vs estimate — detailed breakdowns.", ico: "🧾" },
-    { t: "Packing per 100 CF", d: "Packing efficiency normalized per 100 cubic feet.", ico: "📏" },
-    { t: "Claims", d: "Damage claims — volume, cost and resolution.", ico: "🛡️" },
-  ]},
-  { group: "⭐ Customers & Storage", items: [
-    { t: "Reviews", d: "Customer reviews — ratings, sources and trends.", ico: "⭐" },
-    { t: "Storage", d: "Storage business — units, revenue and occupancy.", ico: "🏬" },
-  ]},
+/* ---------------- page registry ---------------- */
+window.PAGES = [];
+window.registerPage = p => PAGES.push(p);
+
+/* Groups shown in the sidebar (pages register with group keys). */
+const GROUPS = [
+  { key: "overview",  title: "Overview & Growth",   ico: "📈" },
+  { key: "sales",     title: "Sales & Leads",       ico: "💼" },
+  { key: "ops",       title: "Operations",          ico: "🚚" },
+  { key: "customers", title: "Customers & Storage",  ico: "⭐" },
 ];
 
+/* Pages not yet built — shown greyed with a SOON tag so the full scope is visible. */
+const PLANNED = [
+  { group: "overview",  ico: "🧭", title: "Analysis by Category" },
+  { group: "sales",     ico: "🧑‍💼", title: "Sales Person Analysis" },
+  { group: "sales",     ico: "📣", title: "Ads Analysis" },
+  { group: "sales",     ico: "☎️", title: "CallRail" },
+  { group: "ops",       ico: "🛠️", title: "Forman" },
+  { group: "ops",       ico: "📐", title: "Forman Analysis" },
+  { group: "ops",       ico: "📦", title: "Packing" },
+  { group: "ops",       ico: "🧾", title: "Packing Analysis" },
+  { group: "ops",       ico: "📏", title: "Packing per 100 CF" },
+  { group: "ops",       ico: "🛡️", title: "Claims" },
+  { group: "customers", ico: "⭐", title: "Reviews" },
+];
+
+let CURRENT = null;
+
+function navigate(id, push) {
+  const page = PAGES.find(p => p.id === id) || PAGES[0];
+  if (!page) return;
+  CURRENT = page;
+  if (push !== false) location.hash = "page=" + page.id;
+  document.querySelectorAll(".rs-nav-item").forEach(n =>
+    n.classList.toggle("active", n.dataset.id === page.id));
+  renderPage();
+}
+
+async function renderPage() {
+  const host = document.getElementById("content");
+  host.innerHTML = `<div class="rs-loading"><div>Loading <b>${CURRENT.title}</b>…</div><div class="bar"><i></i></div></div>`;
+  try {
+    await CURRENT.render(host);
+  } catch (e) {
+    host.innerHTML = `<div class="rs-loading"><span class="err">${RSC.esc(e.message)}</span></div>`;
+    console.error(e);
+  }
+}
+
+function buildNav() {
+  const q = (document.getElementById("navSearch").value || "").toLowerCase();
+  const navHost = document.getElementById("nav");
+  navHost.innerHTML = "";
+  GROUPS.forEach(g => {
+    const items = PAGES.filter(p => p.group === g.key && p.title.toLowerCase().includes(q));
+    const planned = PLANNED.filter(p => p.group === g.key && p.title.toLowerCase().includes(q));
+    if (!items.length && !planned.length) return;
+    const box = RSC.el("div", "rs-group",
+      `<div class="g-title">${g.ico} ${g.title}</div>`);
+    items.forEach(p => {
+      const a = RSC.el("div", "rs-nav-item" + (CURRENT && CURRENT.id === p.id ? " active" : ""),
+        `<span class="ico">${p.ico || "📄"}</span>${RSC.esc(p.title)}`);
+      a.dataset.id = p.id;
+      a.onclick = () => navigate(p.id);
+      box.appendChild(a);
+    });
+    planned.forEach(p => box.appendChild(RSC.el("div", "rs-nav-item disabled",
+      `<span class="ico">${p.ico}</span>${RSC.esc(p.title)}<span class="soon">SOON</span>`)));
+    navHost.appendChild(box);
+  });
+}
+
+/* ---------------- global filter bar ---------------- */
+let rerenderTimer = null;
+function onFilterChange() {
+  clearTimeout(rerenderTimer);
+  rerenderTimer = setTimeout(renderPage, 120);
+}
+
+async function buildFilters() {
+  const host = document.getElementById("filters");
+  host.innerHTML = "";
+  RSC.dateBar(host, onFilterChange);
+  // Slicer values come from the two main datasets (loaded lazily but both needed here).
+  const [closing, moveboard] = await Promise.all([RS.load("closing"), RS.load("moveboard")]);
+  const distinct = (rows, col, sortDesc) => {
+    const s = new Set();
+    rows.forEach(r => { const v = r[col]; if (v != null && v !== "") s.add(String(v)); });
+    const arr = [...s].sort();
+    return sortDesc ? arr.reverse() : arr;
+  };
+  const monthVals = ["1","2","3","4","5","6","7","8","9","10","11","12"];
+  const defs = [
+    ["year",       distinct(closing, "_y", true)],
+    ["month",      monthVals],
+    ["company",    distinct(closing, "Company")],
+    ["source",     distinct(closing, "Source")],
+    ["state",      distinct(closing, "State")],
+    ["foreman",    distinct(closing, "Foreman")],
+    ["sales",      distinct(closing, "Sales Person")],
+    ["cfRange",    ["0-200","201-500","501-800","801-1000","1001-1500","1501-2000","Over 2000"]],
+    ["billRange",  ["$0 - $500","$501 - $1,000","$1,001 - $3,000","$3,001 - $5,000","$5,001 - $10,000","$10,001 - $20,000","Over $20,000"]],
+    ["movingType", ["Local Moving","Regular Moving","Straight Moving"]],
+    ["sizeOfMove", distinct(moveboard, "Size of Move")],
+    ["statusCat",  distinct(moveboard, "Status Category")],
+  ];
+  defs.forEach(([key, values]) =>
+    RSC.multiSelect(host, { key, label: RS.FIELDS[key].label, values, onChange: onFilterChange }));
+  const clear = RSC.el("button", "rs-clear", "✕ Clear all");
+  clear.onclick = () => {
+    Object.values(RS.state.multi).forEach(s => s.clear());
+    RS.state.dateFrom = RS.state.dateTo = RS.state.dayFrom = RS.state.dayTo = null;
+    buildFilters().then(renderPage);
+  };
+  host.appendChild(clear);
+}
+
+/* ---------------- boot ---------------- */
 ZTZ.header("reporting", "Reporting System");
 if (!ZTZ.getToken()) {
   document.getElementById("gate").classList.remove("hidden");
@@ -70,14 +164,27 @@ if (!ZTZ.getToken()) {
     .catch(e => document.getElementById("gateErr").textContent = e.message);
 } else {
   document.getElementById("app").classList.remove("hidden");
-  document.getElementById("groups").innerHTML = DASHBOARDS.map(g => {
-    const cards = g.items.map(x => x.live
-      ? `<a class="dcard" href="${x.href}"><span class="badge live">LIVE</span><h3><span class="ico">${x.ico}</span>${x.t}</h3><p>${x.d}</p><span class="open">Open dashboard →</span></a>`
-      : `<div class="dcard soon"><span class="badge soon">IN BUILD</span><h3><span class="ico">${x.ico}</span>${x.t}</h3><p>${x.d}</p></div>`
-    ).join("");
-    return `<div class="cat-title">${g.group}</div><div class="dashgrid">${cards}</div>`;
-  }).join("");
+  document.getElementById("navSearch").oninput = buildNav;
+  window.addEventListener("hashchange", () => {
+    const id = (location.hash.match(/page=([\w-]+)/) || [])[1];
+    if (id && (!CURRENT || CURRENT.id !== id)) navigate(id, false);
+  });
+  // Pages register themselves as their scripts load (see below); boot after load.
+  window.addEventListener("load", async () => {
+    buildNav();
+    const id = (location.hash.match(/page=([\w-]+)/) || [])[1];
+    CURRENT = PAGES.find(p => p.id === id) || PAGES[0];
+    buildNav();
+    await buildFilters();
+    navigate(CURRENT.id, false);
+  });
 }
 </script>
+<!-- page modules (each calls registerPage) -->
+<script src="pages/jobs-vs-hours.js"></script>
+<script src="pages/yoy-diff.js"></script>
+<script src="pages/leads-analysis.js"></script>
+<script src="pages/leads-by-state.js"></script>
+<script src="pages/storage.js"></script>
 </body>
 </html>
