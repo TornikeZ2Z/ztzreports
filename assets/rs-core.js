@@ -51,6 +51,83 @@ window.RS = (function () {
         "Total To Carrier", "Total Bill", "Card Payment", "Balance Due", "Sales Person"],
       dateCols: { "Date": "Date" }, defaultDate: "Date",
     },
+    claims: {
+      table: "fct_claims",
+      cols: ["Created Date", "Customer", "Request No", "Group", "Status", "Reason",
+        "Responsibility", "Request Joinkey"],
+      dateCols: { "Created Date": "Created Date" }, defaultDate: "Created Date",
+    },
+    negative_reviews: {
+      table: "fct_negative_reviews",
+      cols: ["Negative Review Id", "Company", "Group", "Customer", "Request No",
+        "Is Identified", "Status", "Review Score", "Source", "Written Date", "Date ID",
+        "Request Joinkey"],
+      dateCols: { "Date ID": "Date ID", "Written Date": "Written Date" }, defaultDate: "Date ID",
+    },
+    rollup: {   // per-Request support rollup — lookup table, do NOT RS.filter it
+      table: "rollup_support",
+      cols: ["Request Joinkey", "Number of Claims Written", "Number of Negative Reviews Written",
+        "Amount Refunded", "Claim Date", "Negative Review Date", "Refund Date",
+        "Amount Reduced from Sales Person", "Amount Refunded Because of Negative Reviews",
+        "Refunds Reason Category", "Negative Reviews Status", "Negative Reviews Source",
+        "Responsibility", "Claims Reason"],
+      dateCols: {}, defaultDate: null,
+    },
+    sales_salaries: {  // keyed by closing Unique Key — time-slice via closing membership
+      table: "fct_sales_salaries",
+      cols: ["Unique Key", "SP Slot", "Sales Person", "Rate", "Salary", "Bill Distribution"],
+      dateCols: {}, defaultDate: null,
+    },
+    helper_salaries: {
+      table: "fct_helper_salaries",
+      cols: ["Unique Key", "Helper Slot", "Helper Name", "Hours Worked", "Helper Rate",
+        "Amount Received", "Tip for Helper"],
+      dateCols: {}, defaultDate: null,
+    },
+    reviews_breakdown: {
+      table: "fct_reviews_breakdown",
+      cols: ["Review Id", "Company", "Event Date", "Request Joinkey", "Counts", "Source",
+        "With Image", "Number of Reviews", "Review Score", "Sales Person"],
+      dateCols: { "Event Date": "Event Date" }, defaultDate: "Event Date",
+    },
+    card_expenses: {
+      table: "fct_card_expenses",
+      cols: ["Company", "Transaction Date", "Expense Category", "Provider", "Amount",
+        "Is Advertising", "Source", "Record Source"],
+      dateCols: { "Transaction Date": "Transaction Date" }, defaultDate: "Transaction Date",
+    },
+    callrail: {
+      table: "fct_callrail",
+      cols: ["Call Status", "Number Name", "Start Time", "Duration Seconds", "Name",
+        "Phone Number", "First-Time Caller", "Source", "Company"],
+      dateCols: { "Start Time": "Start Time" }, defaultDate: "Start Time",
+    },
+    leads: {
+      table: "fct_leads",
+      cols: ["Source", "Lead Date", "Customer", "Status", "Category", "State",
+        "Lead Cost", "Net Cost", "Company", "Request # From Moveboard", "Matching Status"],
+      dateCols: { "Lead Date": "Lead Date" }, defaultDate: "Lead Date",
+    },
+    scorecard: {
+      table: "mart_forman_scorecard",
+      cols: ["Foreman", "Month", "Month Year", "Total Jobs", "Total Packing Written",
+        "Total CF", "Total Packing Estimate", "Total Bill Estimate", "Total Reviews Written",
+        "Forman Fault Claims", "Packing per 100 CF", "Packing per 100 CF Score",
+        "Packing Difference %", "Packing Vs Estimate Score", "Reviews to Jobs Ratio",
+        "Review Score", "Claim Score", "Forman Score", "Forman Score Rank",
+        "Forman Score Prev Month"],
+      dateCols: { "Month": "Month" }, defaultDate: "Month",
+    },
+    review_counts: {
+      table: "fct_review_counts",
+      cols: ["Company", "Platform", "Date", "Number of Reviews"],
+      dateCols: { "Date": "Date" }, defaultDate: "Date",
+    },
+    review_goals: {
+      table: "fct_review_goals",
+      cols: ["Company", "Platform", "Date", "Number of Reviews"],
+      dateCols: { "Date": "Date" }, defaultDate: "Date",
+    },
   };
   const _cache = {};
   const _loading = {};
@@ -62,7 +139,7 @@ window.RS = (function () {
       "?limit=1000000&cols=" + encodeURIComponent(spec.cols.join(",")))
       .then(j => {
         const rows = j.rows || [];
-        rows.forEach(r => {   // pre-derive date parts for the default date column
+        if (spec.defaultDate) rows.forEach(r => {   // pre-derive default date parts
           const d = String(r[spec.defaultDate] || "").slice(0, 10);
           r._d = d; r._y = d.slice(0, 4); r._m = parseInt(d.slice(5, 7), 10) || 0;
           r._day = parseInt(d.slice(8, 10), 10) || 0;
@@ -79,13 +156,13 @@ window.RS = (function () {
 
   // Global slicer fields → per-dataset column mapping (null = not applicable).
   const FIELDS = {
-    year:        { label: "Year",         closing: "_y",            moveboard: "_y",             storage: "_y", refunds: "_y", long_distance: "_y" },
-    month:       { label: "Month",        closing: "_m",            moveboard: "_m",             storage: "_m", refunds: "_m", long_distance: "_m" },
-    company:     { label: "Company",      closing: "Company",       moveboard: "Company",        storage: "Company", refunds: "Company", long_distance: "Company" },
-    source:      { label: "Source",       closing: "Source",        moveboard: "Source",         refunds: "Source", long_distance: "Source" },
-    state:       { label: "State",        closing: "State",         moveboard: "State" },
-    foreman:     { label: "Foreman",      closing: "Foreman",       refunds: "Foreman" },
-    sales:       { label: "Sales Person", closing: "Sales Person",  moveboard: "Assigned",       refunds: "Sales Person", long_distance: "Sales Person" },
+    year:        { label: "Year",         closing: "_y",            moveboard: "_y",             storage: "_y", refunds: "_y", long_distance: "_y", claims: "_y", negative_reviews: "_y", reviews_breakdown: "_y", card_expenses: "_y", callrail: "_y", leads: "_y", scorecard: "_y", review_counts: "_y", review_goals: "_y" },
+    month:       { label: "Month",        closing: "_m",            moveboard: "_m",             storage: "_m", refunds: "_m", long_distance: "_m", claims: "_m", negative_reviews: "_m", reviews_breakdown: "_m", card_expenses: "_m", callrail: "_m", leads: "_m", scorecard: "_m", review_counts: "_m", review_goals: "_m" },
+    company:     { label: "Company",      closing: "Company",       moveboard: "Company",        storage: "Company", refunds: "Company", long_distance: "Company", negative_reviews: "Company", reviews_breakdown: "Company", card_expenses: "Company", callrail: "Company", leads: "Company", review_counts: "Company", review_goals: "Company" },
+    source:      { label: "Source",       closing: "Source",        moveboard: "Source",         refunds: "Source", long_distance: "Source", negative_reviews: "Source", reviews_breakdown: "Source", card_expenses: "Source", callrail: "Source", leads: "Source" },
+    state:       { label: "State",        closing: "State",         moveboard: "State",          leads: "State" },
+    foreman:     { label: "Foreman",      closing: "Foreman",       refunds: "Foreman",          scorecard: "Foreman" },
+    sales:       { label: "Sales Person", closing: "Sales Person",  moveboard: "Assigned",       refunds: "Sales Person", long_distance: "Sales Person", reviews_breakdown: "Sales Person" },
     cfRange:     { label: "CF Range",     moveboard: "CF Range" },
     billRange:   { label: "Bill Range",   closing: "Bill Range",    moveboard: "Bill Range" },
     movingType:  { label: "Moving Type",  closing: "Moving Type" },
@@ -193,6 +270,51 @@ window.RS = (function () {
   // --- Refunds.
   register("Total Refunds", "refunds", money, rows => sum(rows, "Total refund"));
   register("Number of Refunds", "refunds", fmtN, rows => cnt(rows));
+
+  // --- Claims & negative reviews.
+  register("Number of Claims", "claims", fmtN, rows => cnt(rows));
+  register("Number of Negative Reviews", "negative_reviews", fmtN, rows => cnt(rows));
+  register("Identified Negative Reviews", "negative_reviews", fmtN,
+    rows => rows.filter(r => num(r["Is Identified"]) === 1).length);
+
+  // --- Card expenses (PBI: Advertising vs Other split on Expense Category).
+  register("Advertisement Expense", "card_expenses", money,
+    rows => sum(rows.filter(r => num(r["Is Advertising"]) === 1), "Amount"));
+  register("Other Card Expenses", "card_expenses", money,
+    rows => sum(rows.filter(r => num(r["Is Advertising"]) !== 1), "Amount"));
+
+  // --- Salaries (join to closing via Unique Key for time slicing).
+  register("Sales Commission", "sales_salaries", money, rows => sum(rows, "Salary"));
+  register("Helper Salary", "helper_salaries", money, rows => sum(rows, "Amount Received"));
+  register("Hours Worked by Helpers", "helper_salaries", fmtN, rows => sum(rows, "Hours Worked"));
+
+  // --- Reviews (breakdown = per-platform parsed tokens; counts = factual monthly).
+  register("Total Reviews Written", "reviews_breakdown", fmtN,
+    rows => sum(rows.filter(r => num(r["Counts"]) === 1), "Number of Reviews"));
+  register("Reviews Written (not counted)", "reviews_breakdown", fmtN,
+    rows => sum(rows.filter(r => num(r["Counts"]) !== 1), "Number of Reviews"));
+  register("Review Score (avg)", "reviews_breakdown", fmt1, rows => {
+    const c = rows.filter(r => num(r["Counts"]) === 1 && r["Review Score"] != null);
+    const n = c.reduce((a, r) => a + num(r["Number of Reviews"]), 0);
+    if (!n) return null;
+    return c.reduce((a, r) => a + num(r["Review Score"]) * num(r["Number of Reviews"]), 0) / n;
+  });
+  register("Total Factual Reviews", "review_counts", fmtN, rows => sum(rows, "Number of Reviews"));
+  register("Review Goal", "review_goals", fmtN, rows => sum(rows, "Number of Reviews"));
+
+  // --- CallRail.
+  register("Total Calls", "callrail", fmtN, rows => cnt(rows));
+  register("First-Time Callers", "callrail", fmtN,
+    rows => rows.filter(r => String(r["First-Time Caller"]) === "1" ||
+      String(r["First-Time Caller"]).toLowerCase() === "true").length);
+  register("Avg Call Duration (s)", "callrail", fmt1, rows => {
+    const v = rows.map(r => num(r["Duration Seconds"])).filter(x => x > 0);
+    return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+  });
+
+  // --- Provider leads.
+  register("Provider Leads", "leads", fmtN, rows => cnt(rows));
+  register("Lead Cost", "leads", money, rows => sum(rows, "Lead Cost"));
 
   /* Generic evaluator: measure over the CURRENT global filters. */
   async function value(name, opts) {
