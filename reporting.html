@@ -43,7 +43,7 @@
 
 <script src="assets/portal.js?v=2"></script>
 <script src="assets/rs-core.js?v=4"></script>
-<script src="assets/rs-components.js?v=2"></script>
+<script src="assets/rs-components.js?v=3"></script>
 <script>
 /* ---------------- page registry ---------------- */
 window.PAGES = [];
@@ -274,25 +274,29 @@ async function buildFilters() {
   rowDates.innerHTML = ""; rowSlicers.innerHTML = "";
   RSC.dateBar(rowDates, onFilterChange);
   const [closing, moveboard] = await Promise.all([RS.load("closing"), RS.load("moveboard")]);
-  const distinct = (rows, col, sortDesc) => {
-    const s = new Set();
-    rows.forEach(r => { const v = r[col]; if (v != null && v !== "") s.add(String(v)); });
-    const arr = [...s].sort();
-    return sortDesc ? arr.reverse() : arr;
+  // Frequency-counted value lists ({v,l,n}) — most common values first, counts shown.
+  const counted = (rowsets) => {          // rowsets: [[rows, col], ...] → unioned counts
+    const g = {};
+    rowsets.forEach(([rows, col]) => rows.forEach(r => {
+      const v = r[col]; if (v != null && v !== "") g[String(v)] = (g[String(v)] || 0) + 1;
+    }));
+    return Object.entries(g).sort((a, b) => b[1] - a[1])
+      .map(([v, n]) => ({ v, l: v, n }));
   };
   const VALUES = {
-    year:       distinct(closing, "_y", true),
-    month:      ["1","2","3","4","5","6","7","8","9","10","11","12"],
-    company:    distinct(closing, "Company"),
-    source:     distinct(closing, "Source"),
-    foreman:    distinct(closing, "Foreman"),
-    sales:      distinct(closing, "Sales Person"),
-    state:      distinct(closing, "State"),
+    year:       counted([[closing, "_y"]]).sort((a, b) => b.v.localeCompare(a.v)),
+    month:      ["1","2","3","4","5","6","7","8","9","10","11","12"]
+                  .map(v => ({ v, l: RS.monthName(+v) })),
+    company:    counted([[closing, "Company"], [moveboard, "Company"]]),
+    source:     counted([[closing, "Source"], [moveboard, "Source"]]),
+    foreman:    counted([[closing, "Foreman"]]),
+    sales:      counted([[closing, "Sales Person"]]),
+    state:      counted([[closing, "State"], [moveboard, "State"]]),
     cfRange:    ["0-200","201-500","501-800","801-1000","1001-1500","1501-2000","Over 2000"],
     billRange:  ["$0 - $500","$501 - $1,000","$1,001 - $3,000","$3,001 - $5,000","$5,001 - $10,000","$10,001 - $20,000","Over $20,000"],
     movingType: ["Local Moving","Regular Moving","Straight Moving"],
-    sizeOfMove: distinct(moveboard, "Size of Move"),
-    statusCat:  distinct(moveboard, "Status Category"),
+    sizeOfMove: counted([[closing, "Size of Move"], [moveboard, "Size of Move"]]),
+    statusCat:  counted([[moveboard, "Status Category"]]),
   };
   PRIMARY.concat(SECONDARY).forEach(key => RSC.multiSelect(rowSlicers,
     { key, label: RS.FIELDS[key].label, values: VALUES[key], onChange: onFilterChange }));
