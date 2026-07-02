@@ -9,22 +9,29 @@ window.RSC = (function () {
   };
   const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-  /* ---------------- multi-select dropdown slicer ---------------- */
+  /* ---------------- multi-select dropdown slicer ----------------
+     values: array of strings OR {v, l, n} objects (value, display label, count). */
   function multiSelect(host, { key, label, values, onChange }) {
+    const items = values.map(v => typeof v === "object" ? v : { v: v, l: v });
+    const labelOf = {};
+    items.forEach(i => { labelOf[i.v] = i.l; });
     const set = RS.state.multi[key] = RS.state.multi[key] || new Set();
     const wrap = el("div", "rs-slicer");
     const btn = el("button", "rs-slicer-btn");
     const pop = el("div", "rs-slicer-pop hidden");
     const paint = () => {
       const n = set.size;
-      btn.innerHTML = `<span class="lbl">${esc(label)}</span><span class="val">${n ? n + " selected" : "All"}</span><span class="chev">▾</span>`;
+      const txt = !n ? "All"
+        : n <= 2 ? [...set].map(v => labelOf[v] || v).join(", ")
+        : n + " selected";
+      btn.innerHTML = `<span class="lbl">${esc(label)}</span><span class="val">${esc(txt)}</span><span class="chev">▾</span>`;
       btn.classList.toggle("on", n > 0);
     };
     const rowsHtml = () => `
       <div class="tools"><input type="text" class="q" placeholder="Search…">
         <button class="mini" data-a="all">All</button><button class="mini" data-a="none">Clear</button></div>
       <div class="opts">` +
-      values.map(v => `<label class="opt"><input type="checkbox" value="${esc(v)}" ${set.has(v) ? "checked" : ""}> ${esc(v)}</label>`).join("") +
+      items.map(i => `<label class="opt"><input type="checkbox" value="${esc(i.v)}" ${set.has(i.v) ? "checked" : ""}> <span class="ol">${esc(i.l)}</span>${i.n != null ? `<span class="on">${Number(i.n).toLocaleString()}</span>` : ""}</label>`).join("") +
       `</div>`;
     pop.innerHTML = rowsHtml();
     const sync = () => {
