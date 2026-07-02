@@ -100,6 +100,45 @@ const PAGE_ICONS = {
 /* Pages not yet built — shown greyed with a SOON tag so the full scope is visible. */
 const PLANNED = [];  // all 16 General Overview pages are built
 
+/* Virtual tab groups (user-approved merges): the sidebar shows ONE item; the
+   content area renders a tab bar over the constituent pages. Page modules stay
+   untouched — future merges are one entry here. */
+const MERGED = [
+  { id: "leads", group: "sales", icon: "funnel", title: "Leads",
+    tabs: [["leads-analysis", "Funnel"], ["leads-by-state", "Geography"]] },
+  { id: "marketing", group: "sales", icon: "megaphone", title: "Marketing",
+    tabs: [["ads-analysis", "Ad Spend & ROI"], ["callrail", "Call Tracking"]] },
+  { id: "foremen", group: "ops", icon: "tool", title: "Foremen",
+    tabs: [["forman", "Scorecard"], ["forman-analysis", "Deep Comparison"]] },
+  { id: "packing-suite", group: "ops", icon: "box", title: "Packing",
+    tabs: [["packing", "Overview"], ["packing-analysis", "Analysis"], ["packing-per-100cf", "Per 100 CF"]] },
+];
+const MERGED_BY_TAB = {};
+MERGED.forEach(m => m.tabs.forEach(([tid]) => MERGED_BY_TAB[tid] = m));
+const mergedActiveTab = {};
+
+function mergedPage(m) {
+  return { id: m.id, group: m.group, title: m.title, async render(host) {
+    const active = mergedActiveTab[m.id] || m.tabs[0][0];
+    host.innerHTML = `<div class="rs-tabs">` + m.tabs.map(([tid, label]) =>
+      `<button class="rs-tab ${tid === active ? "on" : ""}" data-t="${tid}">${RSC.esc(label)}</button>`).join("") +
+      `</div><div id="mergedHost"></div>`;
+    host.querySelectorAll(".rs-tab").forEach(b => b.onclick = () => {
+      mergedActiveTab[m.id] = b.dataset.t; renderPage();
+    });
+    const page = PAGES.find(p => p.id === active);
+    if (page) await page.render(host.querySelector("#mergedHost"));
+  } };
+}
+/* Resolve any id — merged id, constituent id (old deep link), or plain page. */
+function pageFor(id) {
+  const m = MERGED.find(x => x.id === id);
+  if (m) return mergedPage(m);
+  const parent = MERGED_BY_TAB[id];
+  if (parent) { mergedActiveTab[parent.id] = id; return mergedPage(parent); }
+  return PAGES.find(p => p.id === id);
+}
+
 /* Dark chart theme (applies to every Chart.js instance). */
 Chart.defaults.color = "#8b98a8";
 Chart.defaults.borderColor = "#1c2636";
@@ -178,7 +217,7 @@ window.Chart = class extends _RawChart {
 let CURRENT = null;
 
 function navigate(id, push) {
-  const page = PAGES.find(p => p.id === id) || PAGES[0];
+  const page = pageFor(id) || (PAGES[0] && pageFor(PAGES[0].id));
   if (!page) return;
   CURRENT = page;
   if (push !== false) location.hash = "page=" + page.id;
@@ -203,14 +242,28 @@ function buildNav() {
   const navHost = document.getElementById("nav");
   navHost.innerHTML = "";
   GROUPS.forEach(g => {
-    const items = PAGES.filter(p => p.group === g.key && p.title.toLowerCase().includes(q));
+    // Display list: pages in registration order; each merge group appears once
+    // (at its first constituent's position) and its constituents are hidden.
+    const display = [];
+    const seenMerged = new Set();
+    PAGES.filter(p => p.group === g.key).forEach(p => {
+      const m = MERGED_BY_TAB[p.id];
+      if (m) {
+        if (!seenMerged.has(m.id)) {
+          seenMerged.add(m.id);
+          display.push({ id: m.id, title: m.title, iconKey: m.icon,
+            search: m.title + " " + m.tabs.map(t => t[1]).join(" ") });
+        }
+      } else display.push({ id: p.id, title: p.title, iconKey: PAGE_ICONS[p.id], search: p.title });
+    });
+    const items = display.filter(p => p.search.toLowerCase().includes(q));
     const planned = PLANNED.filter(p => p.group === g.key && p.title.toLowerCase().includes(q));
     if (!items.length && !planned.length) return;
     const box = RSC.el("div", "rs-group",
       `<div class="g-title">${g.title}</div>`);
     items.forEach(p => {
       const a = RSC.el("div", "rs-nav-item" + (CURRENT && CURRENT.id === p.id ? " active" : ""),
-        icon(PAGE_ICONS[p.id]) + RSC.esc(p.title));
+        icon(p.iconKey) + RSC.esc(p.title));
       a.dataset.id = p.id;
       a.onclick = () => navigate(p.id);
       box.appendChild(a);
