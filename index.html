@@ -3,69 +3,621 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zip to Zip — Portal</title>
+<title>Zip to Zip — Data Management</title>
 <link rel="icon" type="image/png" href="logo.png">
 <link rel="apple-touch-icon" href="logo.png">
-<link rel="stylesheet" href="assets/portal.css">
+<script src="https://accounts.google.com/gsi/client" async></script>
+<style>
+  :root{
+    --bg:#f4f6f9; --panel:#fff; --ink:#16202c; --muted:#69757f; --faint:#9aa6b1; --line:#e7ebf1;
+    --brand:#9ABA3C; --brand-d:#5f7c20; --brand-soft:#eef5dc; --brand-press:#8aa634;
+    --blue:#2f6df6; --blue-soft:#e8f0fe; --amber:#e8a93b; --amber-soft:#fdf3e0; --red:#e0556b; --red-soft:#fcebee;
+    --teal:#0fb5ae; --shadow:0 1px 2px rgba(16,32,48,.05),0 8px 24px rgba(16,32,48,.06);
+    --radius:13px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+  /* ---------- header ---------- */
+  header.top{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.86);backdrop-filter:saturate(180%) blur(10px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:11px 24px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:750;letter-spacing:.2px}
+  .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--brand),#37c98a);display:grid;place-items:center;color:#fff;font-weight:800;box-shadow:0 2px 8px rgba(10,160,90,.35)}
+  nav.tabs{display:flex;gap:2px;margin-left:6px}
+  nav.tabs button{border:0;background:none;color:var(--muted);font-weight:600;padding:8px 14px;border-radius:9px;cursor:pointer;font-size:14px}
+  nav.tabs button.active{background:var(--brand-soft);color:var(--brand-d)}
+  nav.tabs button:hover:not(.active){background:#eef1f5;color:var(--ink)}
+  nav.tabs a.navlink{text-decoration:none;color:var(--muted);font-weight:600;padding:8px 14px;border-radius:9px;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+  nav.tabs a.navlink:hover{background:#eef1f5;color:var(--ink)}
+  .spacer{flex:1}
+  .who{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:7px}
+  .who .av{width:24px;height:24px;border-radius:50%;background:var(--brand-soft);color:var(--brand-d);display:grid;place-items:center;font-weight:700;font-size:12px}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:0 13px;height:38px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+  .btn:hover{background:#f5f7fa;border-color:#d8dee6}
+  .btn.brand{background:var(--brand);border-color:var(--brand);color:#23300f;font-weight:700}
+  .btn.brand:hover{background:var(--brand-press);border-color:var(--brand-press)}
+  .brandlogo{height:30px;border-radius:6px;display:block}
+  .brandsub{color:var(--muted);font-weight:600;font-size:14px;border-left:1px solid var(--line);padding-left:12px;margin-left:4px}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+  .btn svg{width:15px;height:15px}
+  main{max-width:1280px;margin:0 auto;padding:24px}
+  .hidden{display:none!important}
+  /* ---------- gate ---------- */
+  .gate{min-height:74vh;display:grid;place-items:center;text-align:center}
+  .gate .card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:42px 46px;max-width:430px}
+  .gate h1{margin:.4em 0 .2em;font-size:22px}
+  .gate p{color:var(--muted);margin:.2em 0 20px;line-height:1.55}
+  .gate .g_id_signin{display:flex;justify-content:center}
+  /* ---------- kpis ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi::after{content:"";position:absolute;right:-14px;top:-14px;width:52px;height:52px;border-radius:50%;background:var(--brand-soft)}
+  .kpi .label{font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .kpi .val{font-size:27px;font-weight:780;margin-top:7px;letter-spacing:-.5px}
+  .kpi .sub{font-size:12px;color:var(--faint);margin-top:3px}
+  .refreshbar{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:11px 16px;margin-bottom:16px;font-size:13.5px;color:var(--muted)}
+  .refreshbar .dotlive{width:8px;height:8px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 3px var(--brand-soft);flex:none}
+  .refreshbar b{color:var(--ink);font-weight:650}
+  /* ---------- overview cards ---------- */
+  .section-title{font-size:12px;font-weight:750;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:4px 0 12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(266px,1fr));gap:10px}
+  .tcard{background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px;box-shadow:var(--shadow);cursor:pointer;transition:transform .09s,box-shadow .09s,border-color .09s}
+  .tcard:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(16,32,48,.12);border-color:#d8e0e8}
+  .tcard h3{margin:0;font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:7px}
+  .tcard .openhint{margin-left:auto;color:var(--faint);font-size:11px;font-weight:600;opacity:0;transition:opacity .1s}
+  .tcard:hover .openhint{opacity:1}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none;box-shadow:0 0 0 3px rgba(0,0,0,.03)}
+  .dot.g{background:var(--brand)} .dot.a{background:var(--amber)} .dot.r{background:#aab4bd}
+  .tcard .rows{font-size:20px;font-weight:780;margin:5px 0 3px;letter-spacing:-.4px}
+  .tcard .rows-lbl{font-size:11px}
+  .meta{font-size:11.5px;color:var(--muted);line-height:1.5}
+  .meta b{color:var(--ink);font-weight:650}
+  .chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+  .chip{background:#f2f5f9;border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:10px;color:var(--muted)}
+  /* ---------- layer + folder grouping ---------- */
+  .layer-sec{margin:16px 0 0}
+  .layer-sec:first-child{margin-top:6px}
+  .layer-body{margin-top:13px}
+  .layer-sec[data-open="0"] .layer-body{display:none}
+  .layer-chev{width:17px;height:17px;color:var(--muted);transition:transform .15s;flex:none}
+  .layer-sec[data-open="0"] .layer-chev{transform:rotate(-90deg)}
+  .layer-head{display:flex;align-items:center;gap:12px;padding:13px 16px 13px 20px;border-radius:14px;position:relative;overflow:hidden;cursor:pointer;transition:filter .1s}
+  .layer-head:hover{filter:brightness(.985)}
+  .layer-head.raw{background:linear-gradient(90deg,var(--brand-soft),#fbfdf6)}
+  .layer-head.cur{background:linear-gradient(90deg,#eaf0fe,#fafbff)}
+  .layer-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px}
+  .layer-head.raw::before{background:var(--brand)}
+  .layer-head.cur::before{background:#3f62d8}
+  .layer-badge{font-size:11px;font-weight:820;letter-spacing:.08em;padding:5px 11px;border-radius:8px;flex:none}
+  .layer-badge.raw{background:var(--brand);color:#23300f}
+  .layer-badge.cur{background:#3f62d8;color:#fff}
+  .layer-titles{display:flex;flex-direction:column;gap:1px}
+  .layer-title{font-size:16.5px;font-weight:780;letter-spacing:-.2px;line-height:1.2}
+  .layer-desc{font-size:12px;color:var(--muted);font-weight:500}
+  .layer-sub{margin-left:auto;font-size:12.5px;color:var(--muted);font-weight:650;white-space:nowrap}
+  .folder{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);margin-bottom:11px;overflow:hidden;transition:box-shadow .1s}
+  .folder:hover{box-shadow:0 6px 20px rgba(16,32,48,.09)}
+  .folder-head{display:flex;align-items:center;gap:11px;padding:14px 17px;cursor:pointer;user-select:none;transition:background .08s}
+  .folder-head:hover{background:#f7faf6}
+  .folder-head .chev{width:15px;height:15px;color:var(--faint);transition:transform .15s;flex:none}
+  .folder[data-open="0"] .chev{transform:rotate(-90deg)}
+  .folder[data-open="0"] .folder-body{display:none}
+  .folder[data-open="0"]{background:#fcfdfe}
+  .folder-ico{font-size:17px;line-height:1;flex:none}
+  .folder-name{font-size:15px;font-weight:720;letter-spacing:-.1px}
+  .folder-meta{margin-left:auto;font-size:12px;color:var(--faint);font-weight:600;background:#f2f5f9;padding:3px 10px;border-radius:999px}
+  .folder-body{padding:3px 17px 17px}
+  .tcard .rows-lbl{font-size:12px;font-weight:600;color:var(--faint);letter-spacing:0}
+  .tag-model{display:inline-block;background:#eaf0fe;color:#2f52c9;font-weight:700;font-size:10.5px;padding:1px 7px;border-radius:999px;letter-spacing:.02em}
+  .curated-empty{background:#fff;border:1px dashed #cfd8e3;border-radius:14px;padding:30px 26px;text-align:center;color:var(--faint);font-size:13.5px;line-height:1.6}
+  /* ---------- explore ---------- */
+  .toolbar{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .field{display:flex;align-items:center;gap:7px;height:38px;border:1px solid var(--line);border-radius:10px;padding:0 6px 0 11px;background:#fff}
+  .field label{font-size:11px;color:var(--faint);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  .field select,.field input{border:0;outline:0;background:transparent;font-size:13.5px;color:var(--ink);height:36px}
+  select.bare,input.bare{border:1px solid var(--line);border-radius:10px;height:38px;padding:0 11px;font-size:13.5px;background:#fff;color:var(--ink);outline:0}
+  select.bare:focus,input.bare:focus,.field:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+  .search{flex:1;min-width:180px;position:relative;display:flex;align-items:center}
+  .search svg{position:absolute;left:11px;width:15px;height:15px;color:var(--faint)}
+  .search input{width:100%;height:38px;border:1px solid var(--line);border-radius:10px;padding:0 12px 0 33px;font-size:13.5px;outline:0;background:#fff}
+  .search input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+  .menu-wrap{position:relative}
+  .pop{position:absolute;top:calc(100% + 6px);z-index:50;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(16,32,48,.16);padding:6px;min-width:210px}
+  .pop.right{right:0}
+  .pop button.item{display:flex;width:100%;align-items:center;gap:10px;border:0;background:none;padding:9px 11px;border-radius:8px;font-size:13.5px;cursor:pointer;color:var(--ink);text-align:left}
+  .pop button.item:hover{background:#f3f6f9}
+  .pop button.item svg{width:16px;height:16px;flex:none;color:var(--muted)}
+  .colpop{max-height:320px;overflow:auto;min-width:240px}
+  .colpop .row{display:flex;align-items:center;gap:9px;padding:6px 9px;border-radius:8px;font-size:13px}
+  .colpop .row:hover{background:#f3f6f9}
+  .colpop .tools{display:flex;gap:6px;padding:4px 6px 8px;border-bottom:1px solid var(--line);margin-bottom:6px}
+  .metabar{display:flex;align-items:center;gap:10px;margin:0 2px 10px;font-size:13px;color:var(--muted)}
+  .pill{display:inline-flex;align-items:center;gap:6px;background:#f2f5f9;border:1px solid var(--line);border-radius:999px;padding:3px 11px;font-size:12px;color:var(--muted)}
+  .pill.warn{background:var(--amber-soft);border-color:#f3dca6;color:#9a6b12}
+  .tablewrap{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:auto;max-height:64vh}
+  table.data{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+  table.data th,table.data td{padding:12px 18px;border-bottom:1px solid #eef1f5;text-align:left;white-space:nowrap;max-width:400px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+  table.data thead th{position:sticky;top:0;background:#fbfcfe;font-weight:700;color:#5b6772;cursor:pointer;user-select:none;font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #e3e8ef;z-index:1}
+  table.data thead th:hover{color:var(--brand-d)}
+  table.data tbody tr{transition:background .06s}
+  table.data tbody tr:hover{background:#f5faf7}
+  table.data tbody tr:last-child td{border-bottom:0}
+  table.data th:first-child,table.data td:first-child{padding-left:22px}
+  table.data th:last-child,table.data td:last-child{padding-right:22px}
+  table.data td:first-child{color:var(--muted);font-variant-numeric:tabular-nums}
+  table.data th.num,table.data td.num{text-align:right;font-variant-numeric:tabular-nums}
+  td .money{font-variant-numeric:tabular-nums;font-weight:650}
+  .badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11.5px;font-weight:650;line-height:1.5}
+  .badge.g{background:var(--brand-soft);color:var(--brand-d)} .badge.b{background:var(--blue-soft);color:#1b4fd1}
+  .badge.a{background:var(--amber-soft);color:#9a6b12} .badge.r{background:var(--red-soft);color:#bb3b52}
+  .badge.n{background:#eef1f5;color:#5b6772}
+  .muted{color:var(--faint)} .small{font-size:12px}
+  .pager{display:flex;align-items:center;gap:8px;justify-content:flex-end;margin-top:12px;font-size:13px;color:var(--muted)}
+  .state{display:grid;place-items:center;padding:64px 0;color:var(--faint);text-align:center}
+  .spin{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:sp .8s linear infinite;margin-bottom:12px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  /* docs */
+  .doc-wrap{max-width:940px;margin:0 auto}
+  .doc-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow);margin-bottom:16px}
+  .doc-card h2{font-size:15px;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+  .doc-card>p{color:var(--muted);line-height:1.6;margin:6px 0 12px;font-size:13.5px}
+  .kv{display:flex;gap:12px;align-items:center;font-size:13px;padding:9px 0;border-bottom:1px dashed var(--line)}
+  .kv:last-child{border-bottom:0}
+  .kv .k{color:var(--muted);width:120px;flex:none;font-weight:650}
+  .kv code,code.inline{background:#eef2f7;padding:2px 8px;border-radius:6px;font-size:12.5px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .copybtn{margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:7px;padding:4px 9px;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--muted)}
+  .copybtn:hover{background:#f3f6f9;color:var(--ink)}
+  pre.code{position:relative;background:#0e1726;color:#e7eef6;border-radius:11px;padding:15px 16px;overflow:auto;font-size:12.5px;line-height:1.6;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:4px 0}
+  pre.code .cp{position:absolute;top:8px;right:8px;background:#1d2a3d;border:0;color:#9fb4cc;border-radius:7px;padding:4px 9px;font-size:11px;cursor:pointer}
+  pre.code .cp:hover{background:#26384f;color:#fff}
+  table.api{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+  table.api th,table.api td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+  table.api th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  table.api code{background:#eef2f7;padding:1px 6px;border-radius:5px;font-size:12px;font-family:ui-monospace,monospace}
+  .dc-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  /* toast */
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#16202c;color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.25s;z-index:99;display:flex;gap:8px;align-items:center}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  footer{max-width:1280px;margin:6px auto 32px;padding:0 24px;color:var(--faint);font-size:12px;display:flex;gap:8px;align-items:center}
+  .err{color:var(--red);font-size:13px}
+  @media(max-width:820px){.kpis{grid-template-columns:repeat(2,1fr)}}
+</style>
 </head>
 <body>
-<header class="top" id="ztzHeader"></header>
+<header class="top">
+  <div class="brand"><a href="index.html" title="Portal home"><img class="brandlogo" src="logo-wide.png" alt="Zip to Zip Moving"></a><span class="brandsub">Data Management</span></div>
+  <nav class="tabs" id="tabs">
+    <button data-tab="overview" class="active">Overview</button>
+    <button data-tab="explore">Explore</button>
+    <button data-tab="docs">Documentation</button>
+    <a href="https://tornikez2z.github.io/ztzanalytics/" class="navlink" target="_blank" rel="noopener">Reporting System ↗</a>
+  </nav>
+  <div class="spacer"></div>
+  <div class="who" id="who"></div>
+  <div id="gbtn"><div id="g_id_onload" data-client_id="32168089642-fkk3rglncf6hl5ikq7pi6jbornug1kbb.apps.googleusercontent.com" data-callback="onSignIn" data-auto_prompt="false" data-auto_select="true"></div><div class="g_id_signin" data-type="standard" data-size="medium"></div></div>
+  <button class="btn ghost hidden" id="refreshBtn" title="Refresh data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button>
+</header>
 
 <main>
-  <div class="hero">
-    <img class="mark" src="logo.png" alt="Zip to Zip Moving">
-    <h1>Zip to Zip — Company Portal</h1>
-    <p>Live company data and reporting, in one place. Data refreshes automatically every 6 hours from the systems of record.</p>
-  </div>
+  <section id="gate" class="gate">
+    <div class="card">
+      <img src="logo.png" alt="Zip to Zip Moving" style="width:92px;height:92px;border-radius:20px;display:block;margin:0 auto 18px;box-shadow:var(--shadow)">
+      <h1>Sign in to the Data Portal</h1>
+      <p>Use your <b>@ziptozipmoving.com</b> Google account.<br>The data is read-only and refreshed automatically.</p>
+      <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-shape="pill"></div>
+      <div class="err" id="gateErr" style="margin-top:12px"></div>
+    </div>
+  </section>
 
-  <div class="signbar hidden" id="signbar">
-    <span class="txt">Sign in with your <b>@ziptozipmoving.com</b> Google account to unlock the data &amp; dashboards.</span>
-    <span id="signSlot"></span>
-  </div>
+  <div id="app" class="hidden">
+    <!-- OVERVIEW -->
+    <section id="overview">
+      <div id="refreshBar" class="refreshbar"></div>
+      <div class="kpis" id="kpis"></div>
+      <div class="section-title">Datasets — health &amp; freshness</div>
+      <div id="cards"></div>
+    </section>
 
-  <div class="hubgrid">
-    <a class="hub data" href="data.html">
-      <span class="ico">🗄️</span>
-      <h2>Data Management</h2>
-      <p>The data warehouse behind everything — dataset health &amp; freshness, the raw and curated layers, a full data explorer with exports, and the developer / AI API documentation.</p>
-      <div class="meta" id="dataMeta">
-        <span class="pill">Overview</span><span class="pill">Explore</span><span class="pill">API docs · public</span>
+    <!-- EXPLORE -->
+    <section id="explore" class="hidden">
+      <div class="toolbar">
+        <select class="bare" id="exTable" style="font-weight:650"></select>
+        <div class="menu-wrap">
+          <button class="btn" id="colBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Columns</button>
+          <div class="pop colpop hidden" id="colPop"></div>
+        </div>
+        <div class="field"><label>From</label><input type="date" id="exSince"></div>
+        <select class="bare" id="exLimit" title="Max rows to load">
+          <option value="1000">1,000 rows</option><option value="10000">10,000 rows</option>
+          <option value="50000">50,000 rows</option><option value="1000000">All rows</option>
+        </select>
+        <button class="btn brand" id="exLoad">Load</button>
+        <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="exSearch" placeholder="Search loaded rows…"></div>
+        <div class="menu-wrap">
+          <button class="btn" id="expBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg> Export <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px"><path d="m6 9 6 6 6-6"/></svg></button>
+          <div class="pop right hidden" id="expPop">
+            <button class="item" data-x="csv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg> Download CSV</button>
+            <button class="item" data-x="json"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg> Download JSON</button>
+            <button class="item" data-x="copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> Copy to clipboard</button>
+          </div>
+        </div>
       </div>
-      <span class="go">Open Data Management →</span>
-    </a>
-    <a class="hub reporting" href="reporting.html">
-      <span class="ico">📊</span>
-      <h2>Reporting System</h2>
-      <p>The company dashboards, rebuilt from Power BI on top of the curated warehouse — same measures, same filters, always live. Starting with the 16 General Analysis pages.</p>
-      <div class="meta" id="repMeta">
-        <span class="pill"><b>16</b>&nbsp;dashboards</span><span class="pill"><b>1</b>&nbsp;live</span><span class="pill">more in build</span>
-      </div>
-      <span class="go">Open Reporting System →</span>
-    </a>
+      <div class="metabar" id="exMeta"></div>
+      <div class="tablewrap"><div id="exBody"></div></div>
+      <div class="pager" id="exPager"></div>
+    </section>
+
+    <!-- DOCUMENTATION -->
+    <section id="docs" class="hidden doc-wrap"></section>
   </div>
 </main>
 
-<footer><span>🔒 Read-only · secured by company Google sign-in</span><span class="spacer"></span><span id="statLine"></span></footer>
+<footer><span>🔒 Read-only · secured by company Google sign-in</span><span class="spacer" style="flex:1"></span><span id="genAt"></span></footer>
+<div id="toast"></div>
 
-<script src="assets/portal.js"></script>
 <script>
-ZTZ.header("home");
-if (!ZTZ.getToken()) {
-  document.getElementById("signbar").classList.remove("hidden");
-  ZTZ.mountSignin(document.getElementById("signSlot"));
-} else {
-  // signed in — enrich the Data Management card with live stats
-  ZTZ.api("/api/_stats").then(s => {
-    const T = s.tables || [];
-    const rows = T.reduce((a, t) => a + t.rows, 0);
-    const cur = T.filter(t => (t.layer || "RAW").toUpperCase() !== "RAW").length;
-    document.getElementById("dataMeta").innerHTML =
-      `<span class="pill"><b>${T.length}</b>&nbsp;datasets</span>` +
-      `<span class="pill"><b>${ZTZ.fmtN(rows)}</b>&nbsp;records</span>` +
-      `<span class="pill"><b>${cur}</b>&nbsp;curated tables</span>`;
-    document.getElementById("statLine").textContent = "Snapshot: " + new Date(s.generated_at).toLocaleString();
-  }).catch(() => {});
+const API="https://ztz-bridge-32168089642.us-east4.run.app";
+let TOKEN=null,STATS=null;
+const LABELS={angi_leads:"Angi Leads",thumbtack_leads:"Thumbtack Leads",ringcentral_calls:"RingCentral Calls",
+  ringcentral_sms:"RingCentral SMS",callrail_calls:"CallRail Calls",moveboard:"Moveboard (Jobs)",hatch:"Hatch"};
+const pretty=t=>LABELS[t]||t.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
+const dispName=t=>t.label||pretty(t.table);   // t is a STATS entry
+const fmtN=n=>Number(n).toLocaleString();
+/* group STATS entries into ordered folders by their catalog category */
+function groupByFolder(tables){
+  const f={};
+  tables.forEach(t=>{const k=t.category||"Other";
+    (f[k]=f[k]||{name:k,order:t.cat_order??999,items:[]}).items.push(t);
+    f[k].order=Math.min(f[k].order,t.cat_order??999);});
+  const arr=Object.values(f);
+  arr.forEach(x=>x.items.sort((a,b)=>((a.ds_order??999)-(b.ds_order??999))||a.table.localeCompare(b.table)));
+  arr.sort((a,b)=>(a.order-b.order)||a.name.localeCompare(b.name));
+  return arr;
 }
+const LAYER_META={RAW:{order:1,badge:"raw",title:"Raw Data"},CURATED:{order:2,badge:"cur",title:"Curated · Business Model"},SILVER:{order:2,badge:"cur",title:"Curated · Business Model"}};
+const LAYER_DESC={RAW:"Source data, loaded straight from the systems of record",CURATED:"Cleaned & modeled — ready for reporting",SILVER:"Cleaned & modeled — ready for reporting"};
+const FOLDER_ICONS={"Marketing & Leads":"📣","Communications":"☎️","Operations (Moves)":"🚚","Finances":"💰","Storage":"📦","Logistics Fleet":"👷","Customer Support Service":"🛟","Reviews":"⭐","Reference & Mappings":"🗺️","Facts":"📊","Dimensions":"🧩","Other":"🗂️"};
+/* group STATS entries into layers (RAW / CURATED), each holding folders */
+function groupByLayer(tables){
+  const L={};
+  tables.forEach(t=>{const k=(t.layer||"RAW").toUpperCase();(L[k]=L[k]||{layer:k,items:[]}).items.push(t);});
+  const arr=Object.values(L).map(l=>({layer:l.layer,folders:groupByFolder(l.items),
+    count:l.items.length,rows:l.items.reduce((a,t)=>a+t.rows,0)}));
+  arr.sort((a,b)=>((LAYER_META[a.layer]?LAYER_META[a.layer].order:9)-(LAYER_META[b.layer]?LAYER_META[b.layer].order:9))||a.layer.localeCompare(b.layer));
+  return arr;
+}
+function ago(s){if(!s)return"—";const d=new Date(s.replace(" ","T")+"Z");const m=(Date.now()-d)/6e4;
+  if(m<60)return Math.max(1,Math.round(m))+"m ago";const h=m/60;if(h<24)return Math.round(h)+"h ago";
+  const dd=h/24;if(dd<30)return Math.round(dd)+"d ago";return Math.round(dd/30)+"mo ago";}
+function statusDot(s){if(!s)return"r";const d=(Date.now()-new Date(s.replace(" ","T")+"Z"))/864e5;return d<7?"g":d<30?"a":"r";}
+function dOnly(s){return s?s.slice(0,10):"—";}
+function toast(msg){const t=document.getElementById("toast");t.innerHTML="✓ "+msg;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2200);}
+
+async function api(path){const r=await fetch(API+path,{headers:{Authorization:"Bearer "+TOKEN}});
+  if(!r.ok){if(r.status===401){logout();}throw new Error("HTTP "+r.status+": "+(await r.text()));}return r.json();}
+function decodeJwt(t){try{return JSON.parse(atob(t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")));}catch(e){return {};}}
+function tokenValid(t){const p=decodeJwt(t);return !!(p.exp&&p.exp*1000>Date.now()+30000);}
+function logout(){TOKEN=null;try{localStorage.removeItem("ztz_tok");}catch(e){}
+  document.getElementById("who").innerHTML="";document.getElementById("gbtn").classList.remove("hidden");
+  document.getElementById("refreshBtn").classList.add("hidden");switchTab("overview");}
+
+async function applySession(token){
+  TOKEN=token; try{localStorage.setItem("ztz_tok",token);}catch(e){}
+  const email=(decodeJwt(token).email||"");
+  document.getElementById("who").innerHTML=email?`<span class="av">${email[0].toUpperCase()}</span>${email}`:"";
+  document.getElementById("gbtn").classList.add("hidden");
+  document.getElementById("refreshBtn").classList.remove("hidden");
+  try{await loadStats();}catch(e){document.getElementById("gateErr").textContent=e.message;logout();return;}
+  switchTab("overview");
+}
+window.onSignIn=(resp)=>applySession(resp.credential);
+function restoreSession(){let t=null;try{t=localStorage.getItem("ztz_tok");}catch(e){}
+  if(t&&tokenValid(t))applySession(t);}
+
+async function loadStats(){
+  STATS=await api("/api/_stats");
+  renderOverview();fillSelectors();
+  document.getElementById("genAt").textContent="Snapshot: "+new Date(STATS.generated_at).toLocaleString();
+}
+const kpi=(l,v,s)=>`<div class="kpi"><div class="label">${l}</div><div class="val">${v}</div><div class="sub">${s||""}</div></div>`;
+function renderOverview(){
+  const T=STATS.tables;
+  const totalRows=T.reduce((a,t)=>a+t.rows,0);
+  const lastUpd=T.map(t=>t.last_update).filter(Boolean).sort().slice(-1)[0];
+  const files=T.reduce((a,t)=>a+(t.by_file?t.by_file.length:0),0);
+  document.getElementById("kpis").innerHTML=
+    kpi("Total records",fmtN(totalRows),"across all datasets")+
+    kpi("Datasets",T.length,"live tables")+
+    kpi("Source files",files,"loaded exports")+
+    kpi("Last updated",ago(lastUpd),lastUpd?("on "+dOnly(lastUpd)):"");
+  const card=t=>{
+    const chips=(t.by_file||[]).slice(0,6).map(f=>`<span class="chip">${f.file}: ${fmtN(f.rows)}</span>`).join("");
+    const nf=(t.by_file||[]).length;
+    const src=nf?`<b>${t.columns}</b> fields · <b>${nf}</b> source file${nf===1?'':'s'}`
+               :`<b>${t.columns}</b> fields · <span class="tag-model">modeled</span>`;
+    const cov=(t.date_min||t.date_max)?`<div>Coverage <b>${dOnly(t.date_min)}</b> → <b>${dOnly(t.date_max)}</b></div>`:"";
+    return `<div class="tcard" data-table="${t.table}">
+      <h3><span class="dot ${statusDot(t.last_update)}"></span>${dispName(t)}<span class="openhint">Explore →</span></h3>
+      <div class="rows">${fmtN(t.rows)} <span class="rows-lbl">records</span></div>
+      <div class="meta">
+        <div>Updated <b>${ago(t.last_update)}</b> <span class="muted">(${dOnly(t.last_update)})</span></div>
+        ${cov}
+        <div>${src}</div>
+      </div>${chips?`<div class="chips">${chips}</div>`:""}</div>`;
+  };
+  const folderPanel=f=>{
+    const rows=f.items.reduce((a,t)=>a+t.rows,0);
+    return `<div class="folder" data-open="1">
+      <div class="folder-head">
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m6 9 6 6 6-6"/></svg>
+        <span class="folder-ico">${FOLDER_ICONS[f.name]||"📁"}</span>
+        <span class="folder-name">${f.name}</span>
+        <span class="folder-meta">${f.items.length} dataset${f.items.length===1?'':'s'} · ${fmtN(rows)} records</span>
+      </div>
+      <div class="folder-body"><div class="grid">${f.items.map(card).join("")}</div></div>
+    </div>`;
+  };
+  const layerHead=(lay,count,rows,sub)=>{const m=LAYER_META[lay]||{badge:"cur",title:lay};
+    return `<div class="layer-head ${m.badge}"><svg class="layer-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m6 9 6 6 6-6"/></svg><span class="layer-badge ${m.badge}">${lay}</span>`+
+      `<div class="layer-titles"><div class="layer-title">${m.title}</div>`+
+      `<div class="layer-desc">${LAYER_DESC[lay]||""}</div></div>`+
+      `<span class="layer-sub">${sub!=null?sub:(count+" dataset"+(count===1?'':'s')+" · "+fmtN(rows)+" records")}</span></div>`;};
+  const layers=groupByLayer(T);
+  const layerSec=(head,body)=>`<div class="layer-sec" data-open="0">${head}<div class="layer-body">${body}</div></div>`;
+  let html=layers.map(l=>layerSec(layerHead(l.layer,l.count,l.rows), l.folders.map(folderPanel).join(""))).join("");
+  if(!layers.some(l=>l.layer!=="RAW")){
+    html+=layerSec(layerHead("CURATED",0,0,"in progress"),
+      `<div class="curated-empty">🏗️ &nbsp;The curated <b>silver layer</b> is being built — modeled tables mirroring the reporting system (facts, dimensions, applied translators) will appear here.</div>`);
+  }
+  document.getElementById("cards").innerHTML=html;
+  document.querySelectorAll(".layer-head").forEach(h=>h.onclick=()=>{const s=h.closest(".layer-sec");s.dataset.open=s.dataset.open==="1"?"0":"1";});
+  document.querySelectorAll(".folder-head").forEach(h=>h.onclick=e=>{e.stopPropagation();const f=h.parentNode;f.dataset.open=f.dataset.open==="1"?"0":"1";});
+  document.querySelectorAll(".tcard").forEach(c=>c.onclick=()=>{document.getElementById("exTable").value=c.dataset.table;switchTab("explore");onTableChange();loadTable();});
+  renderRefreshBar();
+}
+function nextRefreshStr(){
+  const et=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+  const mins=et.getHours()*60+et.getMinutes();
+  const until=(Math.floor(mins/360)+1)*360-mins;
+  const h=Math.floor(until/60), m=until%60;
+  return (h?h+"h ":"")+m+"m";
+}
+let _refreshing=false;
+function renderRefreshBar(){
+  const el=document.getElementById("refreshBar");
+  if(_refreshing){el.innerHTML=`<span class="dotlive"></span><span><b>Refreshing…</b> pulling the latest data — the overview updates automatically when it's ready (a few minutes).</span>`;return;}
+  el.innerHTML=`<span class="dotlive"></span><span>Data auto-refreshes every 6 hours · <b>next in ${nextRefreshStr()}</b></span><span style="flex:1"></span><button class="btn brand" id="refreshNow">↻ Refresh data now</button>`;
+  document.getElementById("refreshNow").onclick=()=>doDataRefresh();
+}
+function dataSig(){return STATS?STATS.tables.map(t=>t.table+":"+t.rows+":"+t.last_update).join("|"):"";}
+async function doDataRefresh(){
+  _refreshing=true; renderRefreshBar();
+  try{
+    const r=await fetch(API+"/api/refresh",{method:"POST",headers:{Authorization:"Bearer "+TOKEN}});
+    if(r.status===401){logout();return;}
+    const j=await r.json(); if(!r.ok) throw new Error(j.error||("HTTP "+r.status));
+    toast(j.message||"Refresh started"); pollAfterRefresh();
+  }catch(e){ _refreshing=false; renderRefreshBar(); toast("Refresh failed: "+e.message); }
+}
+function pollAfterRefresh(){
+  const before=dataSig(); let n=0;
+  const iv=setInterval(async()=>{ n++;
+    try{await loadStats();}catch(e){clearInterval(iv);_refreshing=false;renderRefreshBar();return;}
+    if(dataSig()!==before){clearInterval(iv);_refreshing=false;renderRefreshBar();toast("Overview updated with fresh data");}
+    else if(n>=12){clearInterval(iv);_refreshing=false;renderRefreshBar();}
+  },30000);
+}
+function fillSelectors(){
+  document.getElementById("exTable").innerHTML=groupByFolder(STATS.tables).map(f=>
+    `<optgroup label="${f.name}">`+f.items.map(t=>`<option value="${t.table}">${dispName(t)}</option>`).join("")+`</optgroup>`
+  ).join("");
+  onTableChange();
+}
+
+/* ---------- Explore ---------- */
+let curRows=[],curCols=[],chosenCols=[],sortKey=null,sortDir=1,page=0;const PAGE=100;
+const statForTable=t=>STATS.tables.find(x=>x.table===t);
+const CUR=/(total|cost|price|tax|quote|payment|charge|valuation|tips|amount|revenue|\bnet\b|\bfee\b)/i;
+const NUMC=/(^#$|count|number|qty|score|duration|segment|response time|trucks|crew|lbs|c\.f)/i;
+const STAT=/status|flag/i;
+const SCOL={booked:"g",completed:"g",won:"g",paid:"g",active:"g",quote:"b",new:"b",open:"b","in progress":"b",pending:"a",hold:"a",scheduled:"a",cancelled:"r",canceled:"r",lost:"r",refunded:"r",failed:"r"};
+const isNum=v=>v!==null&&v!==""&&!isNaN(Number(String(v).replace(/[,$\s]/g,"")));
+const money=v=>Number(String(v).replace(/[,$\s]/g,"")).toLocaleString(undefined,{style:"currency",currency:"USD"});
+const isDate=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2})?/.test(v);
+function fmtDate(v){const t=/\d{2}:\d{2}/.test(v);const d=new Date(v.replace(" ","T"));if(isNaN(d))return v;
+  let s=d.toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"});
+  if(t)s+=" · "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});return s;}
+const rightAlign=c=>CUR.test(c)||NUMC.test(c);
+function cell(c,v){
+  if(v===null||v===undefined||v==="")return '<span class="muted">—</span>';
+  if(STAT.test(c)){const k=String(v).toLowerCase().trim();return `<span class="badge ${SCOL[k]||"n"}">${v}</span>`;}
+  if(CUR.test(c)&&isNum(v))return `<span class="money">${money(v)}</span>`;
+  if(isDate(String(v)))return fmtDate(String(v));
+  return String(v);
+}
+function onTableChange(){chosenCols=[];sortKey=null;page=0;document.getElementById("exSince").value="";
+  document.getElementById("colPop").innerHTML="<div class='muted small' style='padding:6px 9px'>Load once to choose columns…</div>";
+  document.getElementById("exMeta").innerHTML="";document.getElementById("exBody").innerHTML="";document.getElementById("exPager").innerHTML="";}
+async function loadTable(){
+  const t=document.getElementById("exTable").value,lim=document.getElementById("exLimit").value,since=document.getElementById("exSince").value;
+  let path=`/api/${encodeURIComponent(t)}?limit=${lim}`;
+  if(chosenCols.length)path+=`&cols=${encodeURIComponent(chosenCols.join(","))}`;
+  const st=statForTable(t);if(since&&st&&st.date_col)path+=`&since=${since}&since_col=${encodeURIComponent(st.date_col)}`;
+  document.getElementById("exBody").innerHTML='<div class="state"><div class="spin"></div>Loading '+pretty(t)+'…</div>';
+  document.getElementById("exMeta").innerHTML="";document.getElementById("exPager").innerHTML="";
+  try{
+    const data=await api(path);
+    curRows=data.rows||[];curCols=curRows.length?Object.keys(curRows[0]):[];
+    if(!chosenCols.length)buildColMenu(curCols);
+    sortKey=null;page=0;
+    document.getElementById("exMeta").innerHTML=`<span class="pill">▦ <b style="color:var(--ink)">${fmtN(data.count)}</b>&nbsp;rows</span>`+
+      (data.truncated?`<span class="pill warn">capped at limit — add a date filter for more</span>`:"")+
+      (since?`<span class="pill">since ${since}</span>`:"");
+    renderGrid();
+  }catch(e){document.getElementById("exBody").innerHTML=`<div class="state"><span class="err">${e.message}</span></div>`;}
+}
+function buildColMenu(cols){
+  const pop=document.getElementById("colPop");
+  pop.innerHTML=`<div class="tools"><button class="btn ghost small" id="colAll">All</button><button class="btn ghost small" id="colNone">None</button></div>`+
+    cols.map(c=>`<label class="row"><input type="checkbox" value="${c.replace(/"/g,'&quot;')}" checked> ${c}</label>`).join("");
+  const sync=()=>{chosenCols=[...pop.querySelectorAll("input:checked")].map(x=>x.value);};
+  pop.querySelectorAll("input").forEach(cb=>cb.onchange=sync);
+  pop.querySelector("#colAll").onclick=()=>{pop.querySelectorAll("input").forEach(x=>x.checked=true);sync();};
+  pop.querySelector("#colNone").onclick=()=>{pop.querySelectorAll("input").forEach(x=>x.checked=false);sync();};
+  chosenCols=cols.slice();
+}
+function viewRows(){
+  const q=document.getElementById("exSearch").value.trim().toLowerCase();
+  let rows=q?curRows.filter(r=>Object.values(r).some(v=>String(v??"").toLowerCase().includes(q))):curRows;
+  if(sortKey)rows=[...rows].sort((a,b)=>{let x=a[sortKey],y=b[sortKey];if(x==null)return 1;if(y==null)return -1;
+    const nx=parseFloat(String(x).replace(/[,$]/g,"")),ny=parseFloat(String(y).replace(/[,$]/g,""));
+    const both=!isNaN(nx)&&!isNaN(ny);return(both?nx-ny:String(x).localeCompare(String(y)))*sortDir;});
+  return rows;
+}
+function renderGrid(){
+  const rows=viewRows(),cols=curCols,start=page*PAGE,slice=rows.slice(start,start+PAGE);
+  if(!curRows.length){document.getElementById("exBody").innerHTML='<div class="state">No rows. Click <b style="color:var(--ink);margin:0 4px">Load</b> to fetch data.</div>';return;}
+  const head="<thead><tr>"+cols.map(c=>`<th class="${rightAlign(c)?'num':''}" data-k="${c.replace(/"/g,'&quot;')}">${c}${sortKey===c?(sortDir>0?" ↑":" ↓"):""}</th>`).join("")+"</tr></thead>";
+  const body="<tbody>"+slice.map(r=>"<tr>"+cols.map(c=>`<td class="${rightAlign(c)?'num':''}" title="${String(r[c]??"").replace(/"/g,'&quot;')}">${cell(c,r[c])}</td>`).join("")+"</tr>").join("")+"</tbody>";
+  document.getElementById("exBody").innerHTML=`<table class="data">${head}${body}</table>`;
+  document.querySelectorAll("#exBody th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=1;}page=0;renderGrid();});
+  const tot=rows.length,end=Math.min(start+PAGE,tot);
+  document.getElementById("exPager").innerHTML=`<span>${tot?start+1:0}–${end} of <b style="color:var(--ink)">${fmtN(tot)}</b></span>
+    <button class="btn" id="pp" ${page<=0?"disabled":""}>‹</button><button class="btn" id="pn" ${end>=tot?"disabled":""}>›</button>`;
+  const pp=document.getElementById("pp"),pn=document.getElementById("pn");
+  if(pp)pp.onclick=()=>{page--;renderGrid();};if(pn)pn.onclick=()=>{page++;renderGrid();};
+}
+function toCSV(rows){if(!rows.length)return"";const cols=Object.keys(rows[0]);
+  const esc=v=>{v=v==null?"":String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  return cols.join(",")+"\n"+rows.map(r=>cols.map(c=>esc(r[c])).join(",")).join("\n");}
+function dl(name,text,type){const b=new Blob([text],{type});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
+function doExport(kind){
+  const rows=viewRows(),t=document.getElementById("exTable").value;
+  if(!rows.length){toast("Nothing to export — load data first");return;}
+  if(kind==="csv"){dl(t+".csv",toCSV(rows),"text/csv");toast(fmtN(rows.length)+" rows → CSV");}
+  else if(kind==="json"){dl(t+".json",JSON.stringify(rows,null,2),"application/json");toast(fmtN(rows.length)+" rows → JSON");}
+  else if(kind==="copy"){navigator.clipboard.writeText(toCSV(rows)).then(()=>toast(fmtN(rows.length)+" rows copied"));}
+  document.getElementById("expPop").classList.add("hidden");
+}
+
+/* ---------- Documentation ---------- */
+const CLIENT_ID="32168089642-fkk3rglncf6hl5ikq7pi6jbornug1kbb.apps.googleusercontent.com";
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const codeBlock=txt=>`<pre class="code"><button class="cp">Copy</button>${esc(txt)}</pre>`;
+const QS=`const API = "${API}";
+// idToken = the Google ID token from "Sign in with Google" (@ziptozipmoving.com)
+const res = await fetch(API + "/api/moveboard?since=2025-01-01&since_col=Create Date&limit=5000", {
+  headers: { Authorization: "Bearer " + idToken }
+});
+const data = await res.json();   // { table, count, truncated, rows: [...] }`;
+function docsStatic(){
+  const docUrl=location.origin+location.pathname.replace(/[^/]*$/,"")+"llms.txt";
+  const aiPrompt="Fetch "+docUrl+" and use it to connect this project to the Zip to Zip live data bridge: repoint the data sources onto the bridge using the API, datasets, columns, auth, and query parameters it documents, then rebuild the dashboards to read live data.";
+  return `
+  <div class="doc-card">
+    <h2>Zip to Zip — Data Bridge API</h2>
+    <p>This portal reads live data from a read-only HTTP API ("the bridge"). This page documents it for developers and AI assistants building dashboards or tools on top of the data. Everything is <b>read-only</b>; data refreshes automatically (~every 6 hours).</p>
+    <div style="background:var(--brand-soft);border:1px solid #c7ecd6;border-radius:10px;padding:12px 14px;margin-top:6px">
+      <div style="font-weight:700;color:var(--brand-d);margin-bottom:4px">🤖 For AI assistants</div>
+      <div style="font-size:13.5px;color:#1f3a2b;line-height:1.55">Point another Claude at this <b>public, no-login</b> reference — it contains this whole spec:</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <code class="inline" style="font-size:12.5px">${docUrl}</code>
+        <button class="copybtn" data-copy="${docUrl}">Copy URL</button>
+        <button class="copybtn" data-copy="${aiPrompt}" style="border-color:var(--brand);color:var(--brand-d)">Copy AI prompt</button>
+      </div>
+    </div>
+  </div>
+  <div class="doc-card">
+    <h2>Connection</h2>
+    <div class="kv"><span class="k">Bridge URL</span><code>${API}</code><button class="copybtn" data-copy="${API}">Copy</button></div>
+    <div class="kv"><span class="k">Google Client ID</span><code>${CLIENT_ID}</code><button class="copybtn" data-copy="${CLIENT_ID}">Copy</button></div>
+    <div class="kv"><span class="k">Auth</span><span>Google sign-in restricted to <code class="inline">@ziptozipmoving.com</code>. Send the ID token as <code class="inline">Authorization: Bearer &lt;token&gt;</code> on every request (except <code class="inline">/api/health</code>).</span></div>
+    <div class="kv"><span class="k">Origin</span><span>The page must be served from an allow-listed origin (<code class="inline">marymd84.github.io</code>, <code class="inline">tornikez2z.github.io</code>). Need another? Ask the data owner.</span></div>
+    <div class="kv"><span class="k">Access</span><span>Read-only (SELECT). No writes are possible.</span></div>
+  </div>
+  <div class="doc-card">
+    <h2>Endpoints</h2>
+    <table class="api">
+      <tr><th>Method &amp; path</th><th>Returns</th></tr>
+      <tr><td><code>GET /api/health</code></td><td>{ "ok": true } — open, no auth</td></tr>
+      <tr><td><code>GET /api/_tables</code></td><td>{ "tables": [...] } — live dataset names</td></tr>
+      <tr><td><code>GET /api/_stats</code></td><td>per-dataset metadata: rows, columns, last update, date coverage, by-file, by-month</td></tr>
+      <tr><td><code>GET /api/&lt;dataset&gt;</code></td><td>{ "table", "count", "truncated", "rows": [...] } — rows keyed by exact column name</td></tr>
+    </table>
+  </div>
+  <div class="doc-card">
+    <h2>Query parameters (for <code class="inline">/api/&lt;dataset&gt;</code>)</h2>
+    <table class="api">
+      <tr><th>Param</th><th>Meaning</th></tr>
+      <tr><td><code>limit</code></td><td>Max rows (ceiling ~1,000,000). <code>truncated:true</code> in the response means you hit the cap.</td></tr>
+      <tr><td><code>since</code> + <code>since_col</code></td><td>Server-side date filter. Example: <code>?since=2025-01-01&amp;since_col=Create Date</code></td></tr>
+      <tr><td><code>cols</code></td><td>Return only these columns (validated). Example: <code>?cols=#,Status,Closing Total,Create Date</code></td></tr>
+    </table>
+    <p style="margin-top:12px">Responses are streamed and gzip-compressed, so full tables of any size are fine. Pull only what you need with <code class="inline">since</code>/<code class="inline">cols</code>, and render large results with a virtualized/paginated grid.</p>
+  </div>
+  <div class="doc-card">
+    <h2>Quick start</h2>
+    ${codeBlock(QS)}
+  </div>
+  <div class="doc-card">
+    <h2>Notes &amp; conventions</h2>
+    <p>• Column names are the exact source headers (with spaces/symbols, e.g. <code class="inline">"Date / Time"</code>, <code class="inline">"#"</code>). • Every table also has 4 lineage columns: <code class="inline">File Name</code>, <code class="inline">Company</code>, <code class="inline">Update Date</code>, <code class="inline">File Path</code>. • Dates come back as strings (<code class="inline">"2025-06-03 17:42:00"</code>); blanks are <code class="inline">null</code>. • Data is customer PII — only signed-in company users see it; don't export it elsewhere. • If your project currently uses any of these datasets from Excel/Sheets, switch its data source to this bridge so it stays live.</p>
+  </div>
+  <div class="section-title" style="margin-top:8px">Datasets (live)</div>
+  <div id="docsDatasets"><div class="state"><div class="spin"></div>Loading dataset schemas…</div></div>`;
+}
+const docsCols={};
+function renderDocs(){
+  const el=document.getElementById("docs");
+  el.innerHTML=docsStatic();          // static reference — works with or without sign-in
+  wireCopy(el);
+  const dd=document.getElementById("docsDatasets");
+  if(!TOKEN||!STATS){
+    dd.innerHTML='<div class="doc-card"><span class="muted">Sign in to load the live dataset list with columns — or open the public reference (<code class="inline">llms.txt</code>) linked above, which lists every dataset and column.</span></div>';
+    return;
+  }
+  dd.innerHTML='<div class="state"><div class="spin"></div>Loading dataset schemas…</div>';
+  loadDocsDatasets(dd);
+}
+async function loadDocsDatasets(dd){
+  await Promise.all(STATS.tables.map(async t=>{
+    if(docsCols[t.table]!==undefined)return;
+    try{const d=await api(`/api/${encodeURIComponent(t.table)}?limit=1`);docsCols[t.table]=d.rows.length?Object.keys(d.rows[0]):[];}
+    catch(e){docsCols[t.table]=null;}
+  }));
+  dd.innerHTML=STATS.tables.map(t=>{
+    const cols=docsCols[t.table];
+    const chips=cols?cols.map(c=>`<span class="chip">${esc(c)}</span>`).join(""):'<span class="muted small">unavailable</span>';
+    return `<div class="doc-card"><div class="dc-head"><code class="inline" style="font-size:13px">${t.table}</code> <span class="muted">${pretty(t.table)}</span><span style="flex:1"></span><span class="muted small">${fmtN(t.rows)} rows · date: ${t.date_col||"—"} · ${dOnly(t.date_min)}→${dOnly(t.date_max)}</span></div><div class="chips" style="margin-top:11px">${chips}</div></div>`;
+  }).join("");
+}
+function wireCopy(scope){
+  scope.querySelectorAll(".copybtn").forEach(b=>b.onclick=()=>{navigator.clipboard.writeText(b.dataset.copy);toast("Copied");});
+  scope.querySelectorAll("pre.code .cp").forEach(b=>b.onclick=()=>{const p=b.closest("pre").cloneNode(true);p.querySelector(".cp").remove();navigator.clipboard.writeText(p.textContent);toast("Code copied");});
+}
+
+/* ---------- chrome / events ---------- */
+function switchTab(name){
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));
+  // Documentation is public; Overview/Explore require sign-in (show the gate if not).
+  const showApp=(name==="docs")||!!TOKEN;
+  document.getElementById("gate").classList.toggle("hidden",showApp);
+  document.getElementById("app").classList.toggle("hidden",!showApp);
+  if(showApp){
+    ["overview","explore","docs"].forEach(s=>document.getElementById(s).classList.toggle("hidden",s!==name));
+    if(name==="docs")renderDocs();
+  }
+}
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+document.getElementById("refreshBtn").onclick=()=>{document.getElementById("refreshBtn").style.opacity=.5;loadStats().finally(()=>document.getElementById("refreshBtn").style.opacity=1);toast("Refreshed");};
+document.getElementById("exLoad").onclick=loadTable;
+document.getElementById("exTable").onchange=onTableChange;
+document.getElementById("exSearch").oninput=()=>{page=0;renderGrid();};
+document.getElementById("colBtn").onclick=e=>{e.stopPropagation();document.getElementById("colPop").classList.toggle("hidden");document.getElementById("expPop").classList.add("hidden");};
+document.getElementById("expBtn").onclick=e=>{e.stopPropagation();document.getElementById("expPop").classList.toggle("hidden");document.getElementById("colPop").classList.add("hidden");};
+document.querySelectorAll("#expPop .item").forEach(b=>b.onclick=()=>doExport(b.dataset.x));
+document.addEventListener("click",()=>{document.getElementById("colPop").classList.add("hidden");document.getElementById("expPop").classList.add("hidden");});
+document.getElementById("colPop").addEventListener("click",e=>e.stopPropagation());
+restoreSession();   // reuse a still-valid token so we don't re-prompt every reload
 </script>
 </body>
 </html>
