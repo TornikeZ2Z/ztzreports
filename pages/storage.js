@@ -10,7 +10,6 @@ if (RS.DATASETS.closing.cols.indexOf("Storage") < 0) RS.DATASETS.closing.cols.pu
 registerPage({
   id: "storage",
   group: "customers",
-  ico: "🏬",
   title: "Storage",
   async render(host) {
     const [storageAll, closingAll] = await Promise.all([RS.load("storage"), RS.load("closing")]);
@@ -70,8 +69,8 @@ registerPage({
           data: {
             labels: shown.map(mLabel),
             datasets: [
-              { label: "Storage Additional Revenue", data: shown.map(k => Math.round(addByMonth[k] ? addByMonth[k].v : 0)), backgroundColor: "#9ABA3C", borderRadius: 4 },
-              { label: "Storage Revenue Included in Total Bill", data: shown.map(k => Math.round(inclByMonth[k] || 0)), backgroundColor: "#3f62d8", borderRadius: 4 },
+              { label: "Storage Additional Revenue", data: shown.map(k => Math.round(addByMonth[k] ? addByMonth[k].v : 0)), backgroundColor: "#b7e23b", borderRadius: 4 },
+              { label: "Storage Revenue Included in Total Bill", data: shown.map(k => Math.round(inclByMonth[k] || 0)), backgroundColor: "#5b8cff", borderRadius: 4 },
             ],
           },
           options: {
@@ -117,7 +116,7 @@ registerPage({
     // ---- sub 1: doughnut of Amount by Payment Type · sub 2: recent payments table
     const subs = document.getElementById("subs");
     const byType = RS.groupBy(rows, "Payment Type", "Storage Additional Revenue");
-    const PAL = ["#9ABA3C", "#3f62d8", "#e8a33d", "#d85f3f", "#7a5fd8", "#38b2ac", "#6b7a88", "#c05299", "#8a9a5b", "#4a5568"];
+    const PAL = ["#b7e23b", "#5b8cff", "#e8a33d", "#d85f3f", "#7a5fd8", "#38b2ac", "#6b7a88", "#c05299", "#8a9a5b", "#4a5568"];
     RSC.chartCard(subs, {
       title: "By payment type",
       buildChart(canvas) {
