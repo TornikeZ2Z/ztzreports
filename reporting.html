@@ -77,7 +77,7 @@ const icon = k => `<svg viewBox="0 0 24 24">${ICONS[k] || ICONS.doc}</svg>`;
 /* page id / planned title → icon key */
 const PAGE_ICONS = {
   "jobs-vs-hours": "activity", "yoy-diff": "trend", "leads-analysis": "funnel",
-  "leads-by-state": "pin", "storage": "archive",
+  "leads-by-state": "pin", "storage": "archive", "analysis-by-category": "compass",
   "Analysis by Category": "compass", "Sales Person Analysis": "user",
   "Ads Analysis": "megaphone", "CallRail": "phone", "Forman": "tool",
   "Forman Analysis": "sliders", "Packing": "box", "Packing Analysis": "clipboard",
@@ -86,7 +86,6 @@ const PAGE_ICONS = {
 
 /* Pages not yet built — shown greyed with a SOON tag so the full scope is visible. */
 const PLANNED = [
-  { group: "overview",  title: "Analysis by Category" },
   { group: "sales",     title: "Sales Person Analysis" },
   { group: "sales",     title: "Ads Analysis" },
   { group: "sales",     title: "CallRail" },
@@ -234,6 +233,7 @@ if (!ZTZ.getToken()) {
 </script>
 <!-- page modules (each calls registerPage) -->
 <script src="pages/jobs-vs-hours.js?v=2"></script>
+<script src="pages/analysis-by-category.js?v=2"></script>
 <script src="pages/yoy-diff.js?v=2"></script>
 <script src="pages/leads-analysis.js?v=2"></script>
 <script src="pages/leads-by-state.js?v=2"></script>
