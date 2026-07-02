@@ -135,8 +135,12 @@ window.RS = (function () {
     if (_cache[ds]) return _cache[ds];
     if (_loading[ds]) return _loading[ds];
     const spec = DATASETS[ds];
+    // The deployed bridge %-formats SQL, so column names containing '%' (e.g.
+    // mart's `Packing Difference %`) break its cols= projection — fetch such
+    // tables whole instead (they're small) until the fixed bridge ships.
+    const colsSafe = spec.cols.every(c => c.indexOf("%") === -1);
     _loading[ds] = ZTZ.api("/api/" + encodeURIComponent(spec.table) +
-      "?limit=1000000&cols=" + encodeURIComponent(spec.cols.join(",")))
+      "?limit=1000000" + (colsSafe ? "&cols=" + encodeURIComponent(spec.cols.join(",")) : ""))
       .then(j => {
         const rows = j.rows || [];
         if (spec.defaultDate) rows.forEach(r => {   // pre-derive default date parts
