@@ -81,6 +81,8 @@ body.rs-app .gate p{color:var(--muted)}
 .rs-slicer-pop .opt{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px;font-size:13px;cursor:pointer;color:var(--muted)}
 .rs-slicer-pop .opt:hover{background:#131c2d;color:var(--ink)}
 .rs-slicer-pop .opt input{accent-color:var(--brand)}
+.rs-slicer-pop .opt .ol{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rs-slicer-pop .opt .on{font-size:10.5px;color:var(--faint);font-variant-numeric:tabular-nums}
 
 /* ---------- date bar ---------- */
 .rs-daterange{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;background:#0e1522;height:34px;padding:0 11px;font-size:12.5px}
