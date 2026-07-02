@@ -3,7 +3,6 @@
 registerPage({
   id: "jobs-vs-hours",
   group: "overview",
-  ico: "👷",
   title: "Jobs Done vs Hours Worked",
   async render(host) {
     const rows = RS.filtered("closing", await RS.load("closing"));
@@ -47,8 +46,8 @@ registerPage({
           data: {
             labels: list.map(x => x.f),
             datasets: [
-              { type: "bar", label: calcBy, data: list.map(x => Math.round(x.v)), backgroundColor: "#9ABA3C", borderRadius: 4, yAxisID: "y", order: 2 },
-              { type: "line", label: "Hours Worked", data: list.map(x => Math.round(x.h)), borderColor: "#3f62d8", backgroundColor: "#3f62d8", borderWidth: 2, pointRadius: 2, tension: .3, yAxisID: "y1", order: 1 },
+              { type: "bar", label: calcBy, data: list.map(x => Math.round(x.v)), backgroundColor: "#b7e23b", borderRadius: 4, yAxisID: "y", order: 2 },
+              { type: "line", label: "Hours Worked", data: list.map(x => Math.round(x.h)), borderColor: "#5b8cff", backgroundColor: "#5b8cff", borderWidth: 2, pointRadius: 2, tension: .3, yAxisID: "y1", order: 1 },
             ],
           },
           options: {
