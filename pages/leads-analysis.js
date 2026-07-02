@@ -3,7 +3,6 @@
 registerPage({
   id: "leads-analysis",
   group: "sales",
-  ico: "🧲",
   title: "Leads Analysis",
   async render(host) {
     const rows = RS.filtered("moveboard", await RS.load("moveboard"));
@@ -62,7 +61,7 @@ registerPage({
           data: {
             labels: list.map(x => x.s),
             datasets: [{ label: calcBy, data: list.map(x => isPct ? x[key] : Math.round(x[key] || 0)),
-              backgroundColor: "#9ABA3C", borderRadius: 4 }],
+              backgroundColor: "#b7e23b", borderRadius: 4 }],
           },
           options: {
             indexAxis: "y", responsive: true, maintainAspectRatio: false,
@@ -110,10 +109,10 @@ registerPage({
           data: {
             labels: list.map(x => x.label),
             datasets: [
-              { label: "Total Leads", data: list.map(x => x.total), borderColor: "#3f62d8",
-                backgroundColor: "#3f62d8", borderWidth: 2, pointRadius: 2, tension: .3 },
-              { label: "Confirmed Leads", data: list.map(x => x.conf), borderColor: "#9ABA3C",
-                backgroundColor: "#9ABA3C", borderWidth: 2, pointRadius: 2, tension: .3 },
+              { label: "Total Leads", data: list.map(x => x.total), borderColor: "#5b8cff",
+                backgroundColor: "#5b8cff", borderWidth: 2, pointRadius: 2, tension: .3 },
+              { label: "Confirmed Leads", data: list.map(x => x.conf), borderColor: "#b7e23b",
+                backgroundColor: "#b7e23b", borderWidth: 2, pointRadius: 2, tension: .3 },
             ],
           },
           options: {
